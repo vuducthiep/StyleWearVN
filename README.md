@@ -6,12 +6,15 @@
 - 🧾 Browse & search products (pagination, category filtering)
 - 🔍 Product details, sizes & stock
 - 🙍‍♀️ Authentication (login/register with token), customer & admin pages
-- 🛒 Shopping cart & orders (UI ready, API hooks extensible)
+- 🛒 Shopping cart & orders & promotion (UI ready, API hooks extensible)
+- 💬 Realtime support chat between customer and admin
 
 ## Technologies
 - ☕ Backend: Spring Boot (Java 17), Spring Security + OAuth2, JPA/Hibernate, Maven
 - 🧰 Infra/Cache: Redis ready for caching/session
+- 🔌 Realtime: WebSocket + STOMP + SockJS
 - ⚛️ Frontend: React 18, Vite, TypeScript, TailwindCSS, Lucide icons
+
 
 ## Structure
 - `StyleStore_BE/` – Spring Boot API
