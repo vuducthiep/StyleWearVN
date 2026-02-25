@@ -13,6 +13,7 @@ import java.util.List;
 public class OrderRequest {
     private String shippingAddress;
     private PaymentMethod paymentMethod;
+    private String promotionCode;
     private List<OrderItemRequest> orderItems;
 
     @Getter
@@ -24,6 +25,5 @@ public class OrderRequest {
         private Long productId;
         private Long sizeId;
         private Integer quantity;
-        private Double price;
     }
 }

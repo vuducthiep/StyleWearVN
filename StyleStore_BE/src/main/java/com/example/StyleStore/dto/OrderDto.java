@@ -18,6 +18,9 @@ public class OrderDto {
     private String userName;
     private String phoneNumber;
     private Double totalAmount;
+    private Double discountAmount;
+    private Double finalAmount;
+    private String promotionCode;
     private String shippingAddress;
     private PaymentMethod paymentMethod;
     private OrderStatus status;

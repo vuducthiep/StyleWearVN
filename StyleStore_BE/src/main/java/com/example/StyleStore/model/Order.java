@@ -27,6 +27,12 @@ public class Order {
     @Column(name = "total_amount", nullable = false)
     private Double totalAmount;
 
+    @Column(name = "discount_amount", nullable = false)
+    private Double discountAmount;
+
+    @Column(name = "final_amount", nullable = false)
+    private Double finalAmount;
+
     @Column(name = "shipping_address", nullable = false, length = 255)
     private String shippingAddress;
 
@@ -37,6 +43,10 @@ public class Order {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private OrderStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promotion_id")
+    private Promotion promotion;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

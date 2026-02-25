@@ -10,6 +10,7 @@ import com.example.StyleStore.model.*;
 import com.example.StyleStore.model.enums.OrderStatus;
 import com.example.StyleStore.repository.OrderItemRepository;
 import com.example.StyleStore.repository.OrderRepository;
+import com.example.StyleStore.repository.PromotionRepository;
 import com.example.StyleStore.repository.ProductRepository;
 import com.example.StyleStore.repository.ProductSizeRepository;
 
@@ -38,13 +39,16 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
     private final ProductSizeRepository productSizeRepository;
+    private final PromotionRepository promotionRepository;
 
     public OrderService(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
-            ProductRepository productRepository, ProductSizeRepository productSizeRepository) {
+            ProductRepository productRepository, ProductSizeRepository productSizeRepository,
+            PromotionRepository promotionRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
         this.productSizeRepository = productSizeRepository;
+        this.promotionRepository = promotionRepository;
     }
 
     @Cacheable(cacheNames = "stats:revenue:monthly", key = "'fixed'")
@@ -160,6 +164,9 @@ public class OrderService {
                 .userName(order.getUser().getFullName())
                 .phoneNumber(order.getUser().getPhoneNumber())
                 .totalAmount(order.getTotalAmount())
+                .discountAmount(order.getDiscountAmount())
+                .finalAmount(order.getFinalAmount())
+                .promotionCode(order.getPromotion() != null ? order.getPromotion().getCode() : null)
                 .shippingAddress(order.getShippingAddress())
                 .paymentMethod(order.getPaymentMethod())
                 .status(order.getStatus())
@@ -191,6 +198,9 @@ public class OrderService {
                 .userName(order.getUser().getFullName())
                 .phoneNumber(order.getUser().getPhoneNumber())
                 .totalAmount(order.getTotalAmount())
+                .discountAmount(order.getDiscountAmount())
+                .finalAmount(order.getFinalAmount())
+                .promotionCode(order.getPromotion() != null ? order.getPromotion().getCode() : null)
                 .shippingAddress(order.getShippingAddress())
                 .paymentMethod(order.getPaymentMethod())
                 .status(order.getStatus())
@@ -243,61 +253,97 @@ public class OrderService {
             throw new RuntimeException("Danh sách sản phẩm không được để trống");
         }
 
-        // 2. Tính tổng tiền
-        Double totalAmount = request.getOrderItems().stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
+        // 2. Validate sản phẩm, kiểm tra tồn kho và tính tổng tiền theo giá DB
+        List<OrderItem> pendingOrderItems = new ArrayList<>();
+        double totalAmount = 0.0;
+
+        for (OrderRequest.OrderItemRequest itemRequest : request.getOrderItems()) {
+            if (itemRequest.getQuantity() == null || itemRequest.getQuantity() <= 0) {
+                throw new RuntimeException("Số lượng sản phẩm phải lớn hơn 0");
+            }
+
+            Product product = productRepository.findById(itemRequest.getProductId())
+                    .orElseThrow(() -> new RuntimeException(
+                            "Sản phẩm với ID " + itemRequest.getProductId() + " không tồn tại"));
+
+            ProductSize productSize = productSizeRepository
+                    .findByProduct_IdAndSize_Id(itemRequest.getProductId(), itemRequest.getSizeId())
+                    .orElseThrow(() -> new RuntimeException(
+                            "Size không có sẵn cho sản phẩm này"));
+
+            if (productSize.getStock() < itemRequest.getQuantity()) {
+                throw new RuntimeException(
+                        "Sản phẩm " + product.getName() + ", size " + productSize.getSize().getName()
+                                + " chỉ còn " + productSize.getStock() + " cái");
+            }
+
+            productSize.setStock(productSize.getStock() - itemRequest.getQuantity());
+            productSizeRepository.save(productSize);
+
+            double unitPrice = product.getPrice();
+            totalAmount += unitPrice * itemRequest.getQuantity();
+
+            pendingOrderItems.add(OrderItem.builder()
+                    .product(product)
+                    .size(productSize.getSize())
+                    .quantity(itemRequest.getQuantity())
+                    .price(unitPrice)
+                    .build());
+        }
+
+        Promotion promotion = null;
+        double discountAmount = 0.0;
+        double finalAmount = totalAmount;
+
+        if (request.getPromotionCode() != null && !request.getPromotionCode().trim().isEmpty()) {
+            String promotionCode = request.getPromotionCode().trim();
+            promotion = promotionRepository.findByCode(promotionCode)
+                    .orElseThrow(() -> new RuntimeException("Mã khuyến mãi không tồn tại"));
+
+            LocalDateTime now = LocalDateTime.now();
+            if (!Boolean.TRUE.equals(promotion.getIsActive())) {
+                throw new RuntimeException("Mã khuyến mãi đã bị vô hiệu hóa");
+            }
+            if (now.isBefore(promotion.getStartAt()) || !now.isBefore(promotion.getEndAt())) {
+                throw new RuntimeException("Mã khuyến mãi đã hết hạn hoặc chưa bắt đầu");
+            }
+
+            BigDecimal totalAmountDecimal = BigDecimal.valueOf(totalAmount);
+            if (totalAmountDecimal.compareTo(promotion.getMinOrderAmount()) < 0) {
+                throw new RuntimeException("Đơn hàng chưa đạt giá trị tối thiểu để áp dụng khuyến mãi");
+            }
+
+            BigDecimal calculatedDiscount = totalAmountDecimal
+                    .multiply(promotion.getDiscountPercent())
+                    .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            BigDecimal cappedDiscount = calculatedDiscount.min(promotion.getMaxDiscountAmount());
+            discountAmount = cappedDiscount.doubleValue();
+            finalAmount = totalAmount - discountAmount;
+            if (finalAmount < 0) {
+                finalAmount = 0.0;
+            }
+        }
 
         // 3. Tạo Order
         Order order = Order.builder()
                 .user(user)
                 .totalAmount(totalAmount)
+                .discountAmount(discountAmount)
+                .finalAmount(finalAmount)
                 .shippingAddress(request.getShippingAddress())
                 .paymentMethod(request.getPaymentMethod())
                 .status(OrderStatus.CREATED)
+                .promotion(promotion)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
         Order savedOrder = orderRepository.save(order);
 
-        // 4. Tạo OrderItems từ request
-        List<OrderItem> orderItems = request.getOrderItems().stream()
-                .map(itemRequest -> {
-                    // Kiểm tra Product tồn tại
-                    Product product = productRepository.findById(itemRequest.getProductId())
-                            .orElseThrow(() -> new RuntimeException(
-                                    "Sản phẩm với ID " + itemRequest.getProductId() + " không tồn tại"));
+        // 4. Gắn order cho các order item đã chuẩn bị và lưu
+        pendingOrderItems.forEach(item -> item.setOrder(savedOrder));
 
-                    // Kiểm tra ProductSize tồn tại
-                    ProductSize productSize = productSizeRepository
-                            .findByProduct_IdAndSize_Id(itemRequest.getProductId(), itemRequest.getSizeId())
-                            .orElseThrow(() -> new RuntimeException(
-                                    "Size không có sẵn cho sản phẩm này"));
-
-                    // Kiểm tra stock đủ không
-                    if (productSize.getStock() < itemRequest.getQuantity()) {
-                        throw new RuntimeException(
-                                "Sản phẩm " + product.getName() + ", size " + productSize.getSize().getName()
-                                        + " chỉ còn " + productSize.getStock() + " cái");
-                    }
-
-                    // Giảm stock
-                    productSize.setStock(productSize.getStock() - itemRequest.getQuantity());
-                    productSizeRepository.save(productSize);
-
-                    // Tạo OrderItem
-                    return OrderItem.builder()
-                            .order(savedOrder)
-                            .product(product)
-                            .size(productSize.getSize())
-                            .quantity(itemRequest.getQuantity())
-                            .price(itemRequest.getPrice())
-                            .build();
-                })
-                .collect(Collectors.toList());
-
-        List<OrderItem> savedOrderItems = orderItemRepository.saveAll(orderItems);
+        List<OrderItem> savedOrderItems = orderItemRepository.saveAll(pendingOrderItems);
 
         savedOrder.setOrderItems(savedOrderItems);
         return convertToDetailDto(savedOrder);
