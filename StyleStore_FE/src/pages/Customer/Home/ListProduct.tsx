@@ -186,7 +186,7 @@ export default function ListProduct({
                                 </button>
 
                                 {/* Page Info */}
-                                <div className="text-gray-700 font-semibold">
+                                <div className="text-black font-semibold">
                                     Trang <span className="text-blue-600">{currentPage + 1}</span> / {totalPages}
                                 </div>
 

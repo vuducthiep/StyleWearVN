@@ -4,11 +4,12 @@ import com.example.StyleStore.dto.ApiResponse;
 import com.example.StyleStore.dto.PromotionDto;
 import com.example.StyleStore.service.PromotionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/promotions")
@@ -19,9 +20,18 @@ public class Admin_PromotionController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<PromotionDto>>> getAllPromotions() {
+    public ResponseEntity<ApiResponse<Page<PromotionDto>>> getAllPromotions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
         try {
-            List<PromotionDto> promotions = promotionService.getAllPromotions();
+            Sort sort = sortDir.equalsIgnoreCase("asc")
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+
+            PageRequest pageable = PageRequest.of(page, size, sort);
+            Page<PromotionDto> promotions = promotionService.getAllPromotions(pageable);
             return ResponseEntity.ok(ApiResponse.ok("Lấy toàn bộ khuyến mãi thành công", promotions));
         } catch (Exception e) {
             return ResponseEntity.badRequest()

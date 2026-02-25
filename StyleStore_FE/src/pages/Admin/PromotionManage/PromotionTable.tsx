@@ -7,6 +7,23 @@ type ApiResponse<T> = {
     data?: T;
 };
 
+interface PageData<T> {
+    content: T[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+}
+
+const isPageData = <T,>(data: unknown): data is PageData<T> => {
+    return (
+        typeof data === 'object' &&
+        data !== null &&
+        'content' in data &&
+        Array.isArray((data as PageData<T>).content)
+    );
+};
+
 export interface AdminPromotion {
     id: number;
     code: string;
@@ -25,35 +42,35 @@ interface PromotionTableProps {
     onEdit?: (promotion: AdminPromotion) => void;
 }
 
-const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-    }).format(price);
-};
-
 const formatDateTime = (value?: string) => {
     if (!value) return '-';
     return new Date(value).toLocaleString('vi-VN');
 };
 
+const PAGE_SIZE = 10;
+
 const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit }) => {
     const [promotions, setPromotions] = useState<AdminPromotion[]>([]);
+    const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const fetchPromotions = useCallback(async () => {
+    const fetchPromotions = useCallback(async (pageIndex = 0) => {
         setIsLoading(true);
         setError('');
 
         try {
             const authHeaders = buildAuthHeaders();
-            const res = await fetch('http://localhost:8080/api/admin/promotions', {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...authHeaders,
-                },
-            });
+            const res = await fetch(
+                `http://localhost:8080/api/admin/promotions?page=${pageIndex}&size=${PAGE_SIZE}&sortBy=createdAt&sortDir=desc`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeaders,
+                    },
+                });
 
             if (!res.ok) {
                 const text = await res.text();
@@ -63,13 +80,38 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
                 return;
             }
 
-            const data: ApiResponse<AdminPromotion[]> = await res.json();
+            const data: ApiResponse<PageData<AdminPromotion> | AdminPromotion[]> = await res.json();
             if (!data.success) {
                 setError(data.message || 'Lỗi tải danh sách khuyến mãi.');
                 return;
             }
 
-            setPromotions(data.data || []);
+            const pageData = data.data;
+            if (Array.isArray(pageData)) {
+                const total = pageData.length;
+                const pages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 0;
+                const safePageIndex = pages > 0 ? Math.min(pageIndex, pages - 1) : 0;
+                const start = safePageIndex * PAGE_SIZE;
+                const end = start + PAGE_SIZE;
+
+                setPromotions(pageData.slice(start, end));
+                setTotalElements(total);
+                setTotalPages(pages);
+                setPage(safePageIndex);
+                return;
+            }
+
+            if (isPageData<AdminPromotion>(pageData)) {
+                setPromotions(pageData.content || []);
+                setPage(pageData.number ?? pageIndex);
+                setTotalPages(pageData.totalPages || 0);
+                setTotalElements(pageData.totalElements || 0);
+                return;
+            }
+
+            setPromotions([]);
+            setTotalPages(0);
+            setTotalElements(0);
         } catch (e) {
             if (isAuthTokenMissingError(e)) {
                 setError('Bạn chưa đăng nhập hoặc thiếu token.');
@@ -83,8 +125,17 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
     }, []);
 
     useEffect(() => {
-        fetchPromotions();
-    }, [fetchPromotions, refreshKey]);
+        fetchPromotions(page);
+    }, [fetchPromotions, page, refreshKey]);
+
+    useEffect(() => {
+        setPage(0);
+    }, [refreshKey]);
+
+    const handlePageChange = (nextPage: number) => {
+        setPage(nextPage);
+        fetchPromotions(nextPage);
+    };
 
     return (
         <div className="w-full flex-1 bg-white shadow rounded-lg overflow-hidden border border-slate-200">
@@ -93,14 +144,14 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
                 <div className="flex items-center gap-2">
                     {error && (
                         <button
-                            onClick={fetchPromotions}
+                            onClick={() => fetchPromotions(page)}
                             className="text-sm px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200"
                         >
                             Thử lại
                         </button>
                     )}
                     <button
-                        onClick={fetchPromotions}
+                        onClick={() => fetchPromotions(page)}
                         className="px-4 py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
                     >
                         Tải lại
@@ -119,12 +170,9 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
                     <table className="min-w-full w-full text-sm">
                         <thead className="bg-slate-50 text-slate-600">
                             <tr>
-                                <th className="px-4 py-2 text-left">ID</th>
                                 <th className="px-4 py-2 text-left">Mã</th>
                                 <th className="px-4 py-2 text-left">Tên</th>
                                 <th className="px-4 py-2 text-left">Giảm %</th>
-                                <th className="px-4 py-2 text-left">Giảm tối đa</th>
-                                <th className="px-4 py-2 text-left">Đơn tối thiểu</th>
                                 <th className="px-4 py-2 text-left">Bắt đầu</th>
                                 <th className="px-4 py-2 text-left">Kết thúc</th>
                                 <th className="px-4 py-2 text-left">Trạng thái</th>
@@ -134,12 +182,9 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
                         <tbody className="divide-y divide-slate-100 text-slate-700">
                             {promotions.map((promotion) => (
                                 <tr key={promotion.id} className="hover:bg-slate-50">
-                                    <td className="px-4 py-2">{promotion.id}</td>
                                     <td className="px-4 py-2 font-semibold">{promotion.code}</td>
                                     <td className="px-4 py-2 max-w-xs truncate" title={promotion.name}>{promotion.name}</td>
                                     <td className="px-4 py-2">{Number(promotion.discountPercent)}%</td>
-                                    <td className="px-4 py-2">{formatPrice(Number(promotion.maxDiscountAmount))}</td>
-                                    <td className="px-4 py-2">{formatPrice(Number(promotion.minOrderAmount))}</td>
                                     <td className="px-4 py-2">{formatDateTime(promotion.startAt)}</td>
                                     <td className="px-4 py-2">{formatDateTime(promotion.endAt)}</td>
                                     <td className="px-4 py-2">
@@ -166,9 +211,27 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
                 </div>
             )}
 
-            {!isLoading && !error && promotions.length > 0 && (
-                <div className="px-4 py-3 border-t border-slate-100 text-sm text-slate-700">
-                    <span>Tổng {promotions.length} khuyến mãi</span>
+            {!isLoading && !error && totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 text-sm text-slate-700">
+                    <span>
+                        Trang {page + 1}/{totalPages} • Tổng {totalElements} khuyến mãi
+                    </span>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => handlePageChange(Math.max(page - 1, 0))}
+                            disabled={page === 0}
+                            className="px-3 py-1 rounded border border-slate-300 disabled:opacity-50 hover:bg-slate-50"
+                        >
+                            Trước
+                        </button>
+                        <button
+                            onClick={() => handlePageChange(Math.min(page + 1, totalPages - 1))}
+                            disabled={page >= totalPages - 1}
+                            className="px-3 py-1 rounded border border-slate-300 disabled:opacity-50 hover:bg-slate-50"
+                        >
+                            Sau
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

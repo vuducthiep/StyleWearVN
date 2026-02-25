@@ -105,7 +105,6 @@ const OrderTable: React.FC<OrderTableProps> = ({ refreshKey = 0, onViewDetail })
 
     useEffect(() => {
         fetchOrders(page);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fetchOrders, page, refreshKey]);
 
     const handlePageChange = (nextPage: number) => {
@@ -214,7 +213,7 @@ const OrderTable: React.FC<OrderTableProps> = ({ refreshKey = 0, onViewDetail })
                                 <th className="px-4 py-2 text-left">Tên khách hàng</th>
                                 <th className="px-4 py-2 text-left">Số điện thoại</th>
                                 <th className="px-4 py-2 text-right">Thành tiền</th>
-                                <th className="px-4 py-2 text-left">Địa chỉ giao hàng</th>
+                                <th className="px-4 py-2 text-left w-52">Địa chỉ giao hàng</th>
                                 <th className="px-4 py-2 text-left">Trạng thái</th>
                                 <th className="px-4 py-2 text-right">Thao tác</th>
                             </tr>
@@ -231,7 +230,7 @@ const OrderTable: React.FC<OrderTableProps> = ({ refreshKey = 0, onViewDetail })
                                             <p className="text-xs text-slate-500">Giảm {formatCurrency(order.discountAmount)}</p>
                                         )}
                                     </td>
-                                    <td className="px-4 py-2 max-w-xs truncate" title={order.shippingAddress}>
+                                    <td className="px-4 py-2 w-52 max-w-[13rem] whitespace-normal break-words leading-5" title={order.shippingAddress}>
                                         {order.shippingAddress}
                                     </td>
                                     <td className="px-4 py-2">

@@ -3,6 +3,8 @@ package com.example.StyleStore.service;
 import com.example.StyleStore.dto.PromotionDto;
 import com.example.StyleStore.model.Promotion;
 import com.example.StyleStore.repository.PromotionRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -27,11 +29,9 @@ public class PromotionService {
                 .toList();
     }
 
-    public List<PromotionDto> getAllPromotions() {
-        return promotionRepository.findAll()
-                .stream()
-                .map(this::toDto)
-                .toList();
+    public Page<PromotionDto> getAllPromotions(Pageable pageable) {
+        return promotionRepository.findAll(pageable)
+                .map(this::toDto);
     }
 
     public PromotionDto createPromotion(PromotionDto request) {
