@@ -1,4 +1,5 @@
 
+import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import tetBg from '../../../assets/BG_TET.jpg';
@@ -57,6 +58,7 @@ export default function ListProduct({
     onPrevPage,
 }: ListProductProps) {
     const navigate = useNavigate();
+    const [sortByPrice, setSortByPrice] = useState<"default" | "asc" | "desc">("default");
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat("vi-VN", {
@@ -64,6 +66,20 @@ export default function ListProduct({
             currency: "VND",
         }).format(price);
     };
+
+    const sortedProducts = useMemo(() => {
+        const data = [...products];
+
+        if (sortByPrice === "asc") {
+            return data.sort((a, b) => a.price - b.price);
+        }
+
+        if (sortByPrice === "desc") {
+            return data.sort((a, b) => b.price - a.price);
+        }
+
+        return data;
+    }, [products, sortByPrice]);
 
     if (error) {
         return (
@@ -98,8 +114,31 @@ export default function ListProduct({
                     <>
                         {/* Products Grid */}
                         <div className="bg-red-50/80 backdrop-blur-sm rounded-xl p-8 mb-12 shadow-2xl border-4 border-yellow-400">
+                            <div className="flex justify-end mb-6">
+                                <div className="flex items-center gap-3 bg-white/90 px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
+                                    <label htmlFor="price-sort" className="text-sm font-semibold text-gray-800 whitespace-nowrap">
+                                        Sắp xếp theo giá:
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            id="price-sort"
+                                            value={sortByPrice}
+                                            onChange={(e) => setSortByPrice(e.target.value as "default" | "asc" | "desc")}
+                                            className="appearance-none min-w-44 pl-3 pr-10 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
+                                        >
+                                            <option value="default">Mặc định</option>
+                                            <option value="asc">Thấp đến cao</option>
+                                            <option value="desc">Cao đến thấp</option>
+                                        </select>
+                                        <ChevronRight
+                                            size={16}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 rotate-90 text-gray-500 pointer-events-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {products.map((product) => (
+                                {sortedProducts.map((product) => (
                                     <div
                                         key={product.id}
                                         className="group bg-slate-300 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col"
@@ -202,7 +241,7 @@ export default function ListProduct({
                         )}
 
                         {/* No Products Message */}
-                        {products.length === 0 && !loading && (
+                        {sortedProducts.length === 0 && !loading && (
                             <div className="text-center py-12">
                                 <p className="text-gray-500 text-lg">Không có sản phẩm để hiển thị</p>
                             </div>
