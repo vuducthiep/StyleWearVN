@@ -6,6 +6,7 @@ import com.example.StyleStore.dto.CategoryStockDto;
 import com.example.StyleStore.dto.MonthlyRevenueDto;
 import com.example.StyleStore.dto.MonthlyUserDto;
 import com.example.StyleStore.dto.RevenueGrowthDto;
+import com.example.StyleStore.dto.RevenueWithProductsDto;
 import com.example.StyleStore.service.OrderService;
 import com.example.StyleStore.service.ProductService;
 import com.example.StyleStore.service.UserService;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -89,27 +89,27 @@ public class Admin_StatsController {
 
     @GetMapping("/revenue/by-date")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<BigDecimal>> getRevenueByDate(
+    public ResponseEntity<ApiResponse<RevenueWithProductsDto>> getRevenueByDate(
             @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        BigDecimal revenue = orderService.getRevenueByDate(date);
-        return ResponseEntity.ok(ApiResponse.ok("Lấy doanh thu theo ngày thành công", revenue));
+        RevenueWithProductsDto revenueData = orderService.getRevenueByDate(date);
+        return ResponseEntity.ok(ApiResponse.ok("Lấy doanh thu theo ngày thành công", revenueData));
     }
 
     @GetMapping("/revenue/by-month")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<BigDecimal>> getRevenueByMonth(
+    public ResponseEntity<ApiResponse<RevenueWithProductsDto>> getRevenueByMonth(
             @RequestParam("year") int year,
             @RequestParam("month") int month) {
-        BigDecimal revenue = orderService.getRevenueByMonth(year, month);
-        return ResponseEntity.ok(ApiResponse.ok("Lấy doanh thu theo tháng thành công", revenue));
+        RevenueWithProductsDto revenueData = orderService.getRevenueByMonth(year, month);
+        return ResponseEntity.ok(ApiResponse.ok("Lấy doanh thu theo tháng thành công", revenueData));
     }
 
     @GetMapping("/revenue/by-year")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<BigDecimal>> getRevenueByYear(
+    public ResponseEntity<ApiResponse<RevenueWithProductsDto>> getRevenueByYear(
             @RequestParam("year") int year) {
-        BigDecimal revenue = orderService.getRevenueByYear(year);
-        return ResponseEntity.ok(ApiResponse.ok("Lấy doanh thu theo năm thành công", revenue));
+        RevenueWithProductsDto revenueData = orderService.getRevenueByYear(year);
+        return ResponseEntity.ok(ApiResponse.ok("Lấy doanh thu theo năm thành công", revenueData));
     }
 
     // get best-selling products in categories

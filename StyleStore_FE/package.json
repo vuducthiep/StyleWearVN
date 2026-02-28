@@ -14,6 +14,7 @@
     "@react-oauth/google": "^0.13.4",
     "@stomp/stompjs": "^7.3.0",
     "antd": "^6.1.4",
+    "exceljs": "^4.4.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",
@@ -22,10 +23,12 @@
     "react-countup": "^6.5.3",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.10.1",
-    "recharts": "^3.6.0"
+    "recharts": "^3.6.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/exceljs": "^0.5.3",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",

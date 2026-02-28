@@ -5,7 +5,9 @@ import com.example.StyleStore.dto.MonthlyRevenueDto;
 import com.example.StyleStore.dto.OrderDto;
 import com.example.StyleStore.dto.OrderItemDto;
 import com.example.StyleStore.dto.OrderRequest;
+import com.example.StyleStore.dto.ProductSalesDto;
 import com.example.StyleStore.dto.RevenueGrowthDto;
+import com.example.StyleStore.dto.RevenueWithProductsDto;
 import com.example.StyleStore.model.*;
 import com.example.StyleStore.model.enums.OrderStatus;
 import com.example.StyleStore.repository.OrderItemRepository;
@@ -110,24 +112,40 @@ public class OrderService {
                 growthPercentage);
     }
 
-    public BigDecimal getRevenueByDate(LocalDate date) {
+    public RevenueWithProductsDto getRevenueByDate(LocalDate date) {
         LocalDateTime from = date.atStartOfDay();
         LocalDateTime to = date.plusDays(1).atStartOfDay();
-        return orderRepository
+        return buildRevenueWithProducts(from, to);
+    }
+
+    public RevenueWithProductsDto getRevenueByMonth(int year, int month) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDateTime from = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime to = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
+        return buildRevenueWithProducts(from, to);
+    }
+
+    public RevenueWithProductsDto getRevenueByYear(int year) {
+        LocalDateTime from = LocalDate.of(year, 1, 1).atStartOfDay();
+        LocalDateTime to = LocalDate.of(year + 1, 1, 1).atStartOfDay();
+        return buildRevenueWithProducts(from, to);
+    }
+
+    private RevenueWithProductsDto buildRevenueWithProducts(LocalDateTime from, LocalDateTime to) {
+        BigDecimal revenue = orderRepository
                 .getRevenueByDateRange(from, to, OrderStatus.DELIVERED.name())
                 .orElse(BigDecimal.ZERO);
-    }
 
-    public BigDecimal getRevenueByMonth(int year, int month) {
-        return orderRepository
-                .getRevenueByYearMonth(year, month, OrderStatus.DELIVERED.name())
-                .orElse(BigDecimal.ZERO);
-    }
+        List<ProductSalesDto> soldProducts = orderRepository
+                .getProductSalesByDateRange(from, to, OrderStatus.DELIVERED.name())
+                .stream()
+                .map(item -> new ProductSalesDto(
+                        item.getProductId(),
+                        item.getProductName(),
+                        item.getQuantitySold() == null ? 0L : item.getQuantitySold()))
+                .collect(Collectors.toList());
 
-    public BigDecimal getRevenueByYear(int year) {
-        return orderRepository
-                .getRevenueByYear(year, OrderStatus.DELIVERED.name())
-                .orElse(BigDecimal.ZERO);
+        return new RevenueWithProductsDto(revenue, soldProducts);
     }
 
     public Page<OrderDto> getAllOrders(int page, int size, String sortBy, String sortDir) {
