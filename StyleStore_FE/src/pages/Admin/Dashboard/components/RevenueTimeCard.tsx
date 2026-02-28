@@ -323,6 +323,7 @@ const RevenueTimeCard = () => {
                         type="primary"
                         onClick={handleExportReport}
                         loading={exportLoading}
+                        className="!bg-emerald-600 !border-emerald-600 !text-white hover:!bg-emerald-700 hover:!border-emerald-700"
                     >
                         In báo cáo
                     </Button>
