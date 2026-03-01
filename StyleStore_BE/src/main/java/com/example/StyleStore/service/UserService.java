@@ -39,6 +39,10 @@ public class UserService {
         return userRepository.findAll(pageable);
     }
 
+    public Page<User> searchUsersByFullNameOrEmail(String keyword, Pageable pageable) {
+        return userRepository.searchByFullNameOrEmail(keyword, pageable);
+    }
+
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
     }

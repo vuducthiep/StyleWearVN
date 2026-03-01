@@ -15,7 +15,7 @@ const Sidebar: React.FC = () => {
     const location = useLocation();
 
     const menuItems: SidebarItem[] = [
-        { label: 'Bảng điều khiển', path: '/admin/dashboard', icon: <DashboardOutlined /> },
+        { label: 'Tổng quan', path: '/admin/dashboard', icon: <DashboardOutlined /> },
         { label: 'Quản lý người dùng', path: '/admin/user-manager', icon: <UserOutlined /> },
         { label: 'Quản lý sản phẩm', path: '/admin/product-manager', icon: <ShoppingOutlined /> },
         { label: 'Quản lý danh mục', path: '/admin/category-manager', icon: <AppstoreOutlined /> },

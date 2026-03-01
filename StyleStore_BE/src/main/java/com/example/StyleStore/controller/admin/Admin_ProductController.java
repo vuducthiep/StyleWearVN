@@ -47,6 +47,23 @@ public class Admin_ProductController {
         return ResponseEntity.ok(ApiResponse.ok("Lấy danh sách sản phẩm thành công", result));
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Page<Product>>> searchProducts(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Product> result = productService.searchProductsByNameOrCategory(keyword, pageable);
+        return ResponseEntity.ok(ApiResponse.ok("Tìm kiếm sản phẩm thành công", result));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Product>> getProductById(@PathVariable Long id) {

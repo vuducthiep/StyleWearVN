@@ -33,19 +33,35 @@ const UserTable: React.FC<UserTableProps> = ({ refreshKey = 0, onEdit }) => {
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [searchInput, setSearchInput] = useState('');
+    const [searchKeyword, setSearchKeyword] = useState('');
     const [page, setPage] = useState(0);
     const [size] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
 
-    const fetchUsers = useCallback(async (pageIndex = 0) => {
+    const fetchUsers = useCallback(async (pageIndex = 0, keywordParam = searchKeyword) => {
         setIsLoading(true);
         setError('');
 
         try {
             const authHeaders = buildAuthHeaders();
+            const keyword = keywordParam.trim();
+            const queryParams = new URLSearchParams({
+                page: String(pageIndex),
+                size: String(size),
+                sortBy: 'createdAt',
+                sortDir: 'desc',
+            });
+            if (keyword) {
+                queryParams.set('keyword', keyword);
+            }
+            const endpoint = keyword
+                ? `http://localhost:8080/api/admin/users/search?${queryParams.toString()}`
+                : `http://localhost:8080/api/admin/users?${queryParams.toString()}`;
+
             // Fetch users list from backend
-            const res = await fetch(`http://localhost:8080/api/admin/users?page=${pageIndex}&size=${size}&sortBy=createdAt&sortDir=desc`, {
+            const res = await fetch(endpoint, {
                 headers: {
                     'Content-Type': 'application/json',
                     ...authHeaders,
@@ -86,16 +102,30 @@ const UserTable: React.FC<UserTableProps> = ({ refreshKey = 0, onEdit }) => {
         } finally {
             setIsLoading(false);
         }
-    }, [size]);
+    }, [searchKeyword, size]);
 
     useEffect(() => {
         fetchUsers(page);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fetchUsers, page, refreshKey]);
 
     const handlePageChange = (nextPage: number) => {
         setPage(nextPage);
         fetchUsers(nextPage);
+    };
+
+    const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const keyword = searchInput.trim();
+        setSearchKeyword(keyword);
+        setPage(0);
+        fetchUsers(0, keyword);
+    };
+
+    const handleClearSearch = () => {
+        setSearchInput('');
+        setSearchKeyword('');
+        setPage(0);
+        fetchUsers(0, '');
     };
 
     return (
@@ -111,12 +141,30 @@ const UserTable: React.FC<UserTableProps> = ({ refreshKey = 0, onEdit }) => {
                             Thử lại
                         </button>
                     )}
-                    <button
-                        onClick={() => fetchUsers(page)}
-                        className="px-4 py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
-                    >
-                        Tải lại
-                    </button>
+                    <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            value={searchInput}
+                            onChange={(event) => setSearchInput(event.target.value)}
+                            placeholder="Tên / email"
+                            className="w-52 px-2 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                        />
+                        <button
+                            type="submit"
+                            className="px-3 py-1.5 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
+                        >
+                            Tìm
+                        </button>
+                        {searchKeyword && (
+                            <button
+                                type="button"
+                                onClick={handleClearSearch}
+                                className="px-3 py-1.5 rounded border border-slate-300 text-slate-700 text-sm hover:bg-slate-50 transition"
+                            >
+                                Xóa
+                            </button>
+                        )}
+                    </form>
                 </div>
             </div>
 

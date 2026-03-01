@@ -46,6 +46,23 @@ public class Admin_UserController {
         return ResponseEntity.ok(ApiResponse.ok("Lấy danh sách người dùng thành công", result));
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Page<User>>> searchUsers(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<User> result = userService.searchUsersByFullNameOrEmail(keyword, pageable);
+        return ResponseEntity.ok(ApiResponse.ok("Tìm kiếm người dùng thành công", result));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
     public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable Long id) {

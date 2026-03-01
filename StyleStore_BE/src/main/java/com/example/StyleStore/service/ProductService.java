@@ -154,4 +154,8 @@ public class ProductService {
     public Page<Product> searchProductsByName(String name, Pageable pageable) {
         return productRepository.searchByName(name, ProductStatus.ACTIVE, pageable);
     }
+
+    public Page<Product> searchProductsByNameOrCategory(String keyword, Pageable pageable) {
+        return productRepository.searchByNameOrCategory(keyword, ProductStatus.ACTIVE, pageable);
+    }
 }
