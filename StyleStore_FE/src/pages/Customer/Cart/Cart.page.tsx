@@ -28,6 +28,11 @@ interface Ward {
     Level?: string;
 }
 
+interface UserRole {
+    id?: number;
+    name?: string;
+}
+
 interface UserProfile {
     id: number;
     fullName: string;
@@ -35,7 +40,7 @@ interface UserProfile {
     phoneNumber: string;
     gender: string;
     address: string;
-    role: string;
+    role?: string | UserRole;
     status: string;
     createdAt: string;
 }

@@ -25,13 +25,13 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/admin/users")
 @CrossOrigin(origins = "*")
+@PreAuthorize("hasRole('ADMIN')")
 public class Admin_UserController {
     @Autowired
     private UserService userService;
 
     // for test api - only ADMIN can access (with pagination)
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Page<User>>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -47,7 +47,6 @@ public class Admin_UserController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Page<User>>> searchUsers(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
@@ -64,7 +63,6 @@ public class Admin_UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
     public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable Long id) {
         Optional<User> user = userService.getUserById(id);
         return user
@@ -73,7 +71,6 @@ public class Admin_UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
     public ResponseEntity<ApiResponse<User>> updateUser(@PathVariable Long id, @RequestBody User newUser) {
         if (newUser == null) {
             return ResponseEntity.badRequest().body(ApiResponse.fail("Yêu cầu không hợp lệ"));
@@ -87,7 +84,6 @@ public class Admin_UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
     public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
         boolean deleted = userService.deleteUser(id);
         return deleted

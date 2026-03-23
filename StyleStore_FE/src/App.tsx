@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import AdminLayout from './layouts/AdminLayout';
 import Login from './pages/Auth/Login';
@@ -19,6 +19,23 @@ import SearchPage from './pages/Customer/Search/Search.page';
 import CategoryManager from './pages/Admin/CategoryManage/CategoryManage.page';
 import PromotionManage from './pages/Admin/PromotionManage/PromotionManage.page';
 import SupportChatWidget from './components/SupportChatWidget';
+import { getAuthToken, getCurrentUserRole } from './services/auth';
+import NotFoundPage from './pages/NotFound.page';
+
+const RequireAdminRoute: React.FC = () => {
+  const token = getAuthToken();
+  const role = getCurrentUserRole();
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (role !== 'ADMIN') {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
+};
 
 const App: React.FC = () => {
   return (
@@ -31,15 +48,17 @@ const App: React.FC = () => {
           <Route path="/oauth2-callback" element={<OAuth2CallbackPage />} />
 
           {/* Admin Routes */}
-          <Route element={<AdminLayout />}>
-            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="/admin/dashboard" element={<DashboardPage />} />
-            <Route path="/admin/user-manager" element={<UserManager />} />
-            <Route path="/admin/product-manager" element={<ProductManager />} />
-            <Route path='/admin/category-manager' element={<CategoryManager />} />
-            <Route path='/admin/promotion-manager' element={<PromotionManage />} />
-            <Route path="/admin/order-manager" element={<OrderManage />} />
-            <Route path="/admin/support-chat" element={<SupportChatPage />} />
+          <Route element={<RequireAdminRoute />}>
+            <Route element={<AdminLayout />}>
+              <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="/admin/dashboard" element={<DashboardPage />} />
+              <Route path="/admin/user-manager" element={<UserManager />} />
+              <Route path="/admin/product-manager" element={<ProductManager />} />
+              <Route path='/admin/category-manager' element={<CategoryManager />} />
+              <Route path='/admin/promotion-manager' element={<PromotionManage />} />
+              <Route path="/admin/order-manager" element={<OrderManage />} />
+              <Route path="/admin/support-chat" element={<SupportChatPage />} />
+            </Route>
           </Route>
 
           {/* Customer Routes */}
@@ -49,6 +68,7 @@ const App: React.FC = () => {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path='/orders' element={<OrderPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <SupportChatWidget />
       </BrowserRouter>

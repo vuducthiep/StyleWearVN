@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import type { AdminUser } from './UserTable';
+import type { AdminRole, AdminUser } from './UserTable';
 import { useToast } from '../../../components/ToastProvider';
 import { buildAuthHeaders, isAuthTokenMissingError } from '../../../services/auth';
 
@@ -20,16 +20,64 @@ interface UserForm {
 	fullName: string;
 	email: string;
 	phoneNumber?: string;
-	role?: string;
+	roleId: number | '';
 	status?: string;
 }
 
+type UsersPageResponse = {
+	content: AdminUser[];
+};
+
+const normalizeRole = (role: unknown): AdminRole | null => {
+	if (!role || typeof role !== 'object') return null;
+	const maybeRole = role as { id?: unknown; name?: unknown };
+	if (typeof maybeRole.id !== 'number' || typeof maybeRole.name !== 'string') return null;
+	return { id: maybeRole.id, name: maybeRole.name };
+};
+
+const getUniqueRoles = (users: AdminUser[]): AdminRole[] => {
+	const roleMap = new Map<number, AdminRole>();
+	for (const user of users) {
+		const role = normalizeRole(user.role);
+		if (role && !roleMap.has(role.id)) {
+			roleMap.set(role.id, role);
+		}
+	}
+	return Array.from(roleMap.values());
+};
+
 const UserModal: React.FC<UserModalProps> = ({ isOpen, userId, onClose, onSaved }) => {
-	const [form, setForm] = useState<UserForm>({ fullName: '', email: '', phoneNumber: '', role: 'USER', status: 'ACTIVE' });
+	const [form, setForm] = useState<UserForm>({ fullName: '', email: '', phoneNumber: '', roleId: '', status: 'ACTIVE' });
+	const [roles, setRoles] = useState<AdminRole[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState('');
 	const { pushToast } = useToast();
+
+	useEffect(() => {
+		if (!isOpen) return;
+
+		const fetchRoles = async () => {
+			try {
+				const authHeaders = buildAuthHeaders();
+				const res = await fetch('http://localhost:8080/api/admin/users?page=0&size=200&sortBy=createdAt&sortDir=desc', {
+					headers: {
+						'Content-Type': 'application/json',
+						...authHeaders,
+					},
+				});
+
+				if (!res.ok) return;
+				const data: ApiResponse<UsersPageResponse> = await res.json();
+				const roleOptions = getUniqueRoles(data.data?.content || []);
+				setRoles(roleOptions);
+			} catch {
+				setRoles([]);
+			}
+		};
+
+		fetchRoles();
+	}, [isOpen]);
 
 	useEffect(() => {
 		if (!isOpen || !userId) return;
@@ -61,11 +109,20 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, userId, onClose, onSaved 
 					setError('Dữ liệu trả về không hợp lệ.');
 					return;
 				}
+
+				const normalizedRole = normalizeRole(user.role);
+				if (normalizedRole) {
+					setRoles((prev) => {
+						const exists = prev.some((role) => role.id === normalizedRole.id);
+						return exists ? prev : [...prev, normalizedRole];
+					});
+				}
+
 				setForm({
 					fullName: user.fullName || '',
 					email: user.email || '',
 					phoneNumber: user.phoneNumber || '',
-					role: user.role || 'USER',
+					roleId: normalizedRole?.id ?? '',
 					status: user.status || 'ACTIVE',
 				});
 			} catch (e) {
@@ -83,6 +140,11 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, userId, onClose, onSaved 
 	}, [isOpen, userId]);
 
 	const handleChange = (key: keyof UserForm, value: string) => {
+		if (key === 'roleId') {
+			const nextRoleId = value ? Number(value) : '';
+			setForm((prev) => ({ ...prev, roleId: nextRoleId }));
+			return;
+		}
 		setForm((prev) => ({ ...prev, [key]: value }));
 	};
 
@@ -92,13 +154,18 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, userId, onClose, onSaved 
 		setError('');
 		try {
 			const authHeaders = buildAuthHeaders();
+			const selectedRole = roles.find((role) => role.id === form.roleId);
+			const payload = {
+				...form,
+				role: selectedRole ? { id: selectedRole.id, name: selectedRole.name } : undefined,
+			};
 			const res = await fetch(`http://localhost:8080/api/admin/users/${userId}`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
 					...authHeaders,
 				},
-				body: JSON.stringify(form),
+				body: JSON.stringify(payload),
 			});
 			if (!res.ok) {
 				const text = await res.text();
@@ -181,11 +248,15 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, userId, onClose, onSaved 
 										Role
 										<select
 											className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-											value={form.role}
-											onChange={(e) => handleChange('role', e.target.value)}
+											value={form.roleId}
+											onChange={(e) => handleChange('roleId', e.target.value)}
 										>
-											<option value="ADMIN">ADMIN</option>
-											<option value="USER">USER</option>
+											<option value="">Chọn role</option>
+											{roles.map((role) => (
+												<option key={role.id} value={role.id}>
+													{role.name}
+												</option>
+											))}
 										</select>
 									</label>
 									<label className="text-sm text-slate-700">

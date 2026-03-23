@@ -22,6 +22,11 @@ interface Ward {
     Level?: string;
 }
 
+interface UserRole {
+    id?: number;
+    name?: string;
+}
+
 interface UserProfile {
     id: number;
     fullName: string;
@@ -29,7 +34,7 @@ interface UserProfile {
     phoneNumber: string;
     gender: string;
     address: string;
-    role: string;
+    role?: string | UserRole;
     status: string;
     createdAt: string;
 }
@@ -258,6 +263,12 @@ export default function ProfilePage() {
         });
     };
 
+    const getRoleName = (role?: string | UserRole) => {
+        if (!role) return "N/A";
+        if (typeof role === "string") return role;
+        return role.name || "N/A";
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -317,7 +328,7 @@ export default function ProfilePage() {
                                 <p className="text-blue-100">{profile.email}</p>
                                 <div className="flex gap-4 mt-2">
                                     <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
-                                        {profile.role}
+                                        {getRoleName(profile.role)}
                                     </span>
                                     <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
                                         {profile.status}

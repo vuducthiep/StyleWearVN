@@ -2,7 +2,7 @@
 package com.example.StyleStore.service;
 
 import com.example.StyleStore.model.User;
-import com.example.StyleStore.model.enums.Role;
+import com.example.StyleStore.model.Role;
 import com.example.StyleStore.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -33,6 +33,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     private Collection<? extends GrantedAuthority> getAuthorities(Role role) {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.getName()));
     }
 }

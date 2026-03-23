@@ -2,6 +2,8 @@ package com.example.StyleStore.service;
 
 import com.example.StyleStore.dto.MonthlyUserDto;
 import com.example.StyleStore.model.User;
+import com.example.StyleStore.model.Role;
+import com.example.StyleStore.repository.RoleRepository;
 import com.example.StyleStore.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -21,6 +23,9 @@ import java.util.stream.Collectors;
 public class UserService {
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
@@ -72,7 +77,13 @@ public class UserService {
                         user.setPassword(newUser.getPassword());
                     }
                     if (newUser.getRole() != null) {
-                        user.setRole(newUser.getRole());
+                        String roleName = newUser.getRole().getName();
+                        if (roleName == null || roleName.isBlank()) {
+                            throw new RuntimeException("Role không hợp lệ");
+                        }
+                        Role role = roleRepository.findByName(roleName)
+                                .orElseThrow(() -> new RuntimeException("Role không tồn tại"));
+                        user.setRole(role);
                     }
                     if (newUser.getStatus() != null) {
                         user.setStatus(newUser.getStatus());

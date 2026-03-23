@@ -3,12 +3,13 @@ package com.example.StyleStore.service;
 import com.example.StyleStore.dto.LoginRequest;
 import com.example.StyleStore.dto.RegisterRequest;
 import com.example.StyleStore.dto.AuthResponse;
+import com.example.StyleStore.model.Role;
 import com.example.StyleStore.model.User;
 import com.example.StyleStore.model.Cart;
-import com.example.StyleStore.model.enums.Role;
 import com.example.StyleStore.model.enums.UserStatus;
 import com.example.StyleStore.repository.UserRepository;
 import com.example.StyleStore.repository.CartRepository;
+import com.example.StyleStore.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,6 +31,7 @@ public class AuthService {
 
         private final UserRepository userRepository;
         private final CartRepository cartRepository;
+        private final RoleRepository roleRepository;
         private final PasswordEncoder passwordEncoder;
         private final JwtService jwtService;
         private final AuthenticationManager authenticationManager;
@@ -48,6 +50,9 @@ public class AuthService {
                         genderValue = genderValue.substring(0, 10);
                 }
 
+                Role userRole = roleRepository.findByName("USER")
+                                .orElseThrow(() -> new RuntimeException("Role USER không tồn tại"));
+
                 User user = User.builder()
                                 .fullName(request.fullName())
                                 .email(request.email())
@@ -55,7 +60,7 @@ public class AuthService {
                                 .phoneNumber(request.phoneNumber())
                                 .gender(genderValue)
                                 .address(request.address())
-                                .role(Role.USER)
+                                .role(userRole)
                                 .status(UserStatus.ACTIVE)
                                 .build();
 
@@ -78,9 +83,9 @@ public class AuthService {
                                 user.getPassword(),
                                 getAuthorities(user.getRole()));
 
-                String jwt = jwtService.generateToken(userDetails, user.getId(), user.getRole().name());
+                String jwt = jwtService.generateToken(userDetails, user.getId(), user.getRole().getName());
 
-                return new AuthResponse(jwt, user.getId(), user.getFullName(), user.getEmail(), user.getRole().name());
+                return new AuthResponse(jwt, user.getId(), user.getFullName(), user.getEmail(), user.getRole().getName());
         }
 
         public AuthResponse login(LoginRequest request) {
@@ -105,12 +110,12 @@ public class AuthService {
                                 user.getPassword(),
                                 getAuthorities(user.getRole()));
 
-                String jwt = jwtService.generateToken(userDetails, user.getId(), user.getRole().name());
+                String jwt = jwtService.generateToken(userDetails, user.getId(), user.getRole().getName());
 
-                return new AuthResponse(jwt, user.getId(), user.getFullName(), user.getEmail(), user.getRole().name());
+                return new AuthResponse(jwt, user.getId(), user.getFullName(), user.getEmail(), user.getRole().getName());
         }
 
         private Collection<? extends GrantedAuthority> getAuthorities(Role role) {
-                return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+                return List.of(new SimpleGrantedAuthority("ROLE_" + role.getName()));
         }
 }

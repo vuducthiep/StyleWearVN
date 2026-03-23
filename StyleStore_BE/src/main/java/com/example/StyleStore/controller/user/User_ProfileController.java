@@ -59,7 +59,7 @@ public class User_ProfileController {
                     .phoneNumber(user.getPhoneNumber())
                     .gender(user.getGender())
                     .address(user.getAddress())
-                    .role(user.getRole().name())
+                    .role(user.getRole().getName())
                     .status(user.getStatus().name())
                     .createdAt(user.getCreatedAt())
                     .build();
@@ -102,7 +102,7 @@ public class User_ProfileController {
                     .phoneNumber(user.getPhoneNumber())
                     .gender(user.getGender())
                     .address(user.getAddress())
-                    .role(user.getRole().name())
+                    .role(user.getRole().getName())
                     .status(user.getStatus().name())
                     .createdAt(user.getCreatedAt())
                     .build();
