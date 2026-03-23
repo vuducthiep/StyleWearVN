@@ -11,6 +11,7 @@ import com.example.StyleStore.repository.UserRepository;
 import com.example.StyleStore.repository.CartRepository;
 import com.example.StyleStore.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,10 +20,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 @Service
@@ -35,20 +36,19 @@ public class AuthService {
         private final PasswordEncoder passwordEncoder;
         private final JwtService jwtService;
         private final AuthenticationManager authenticationManager;
+        private final OtpService otpService;
         private static final Logger logger = Logger.getLogger(AuthService.class.getName());
+        private static final Set<String> ALLOWED_GENDERS = Set.of("MALE", "FEMALE", "OTHER");
 
         public AuthResponse register(RegisterRequest request) {
                 if (userRepository.existsByEmail(request.email())) {
-                        throw new RuntimeException("Email đã tồn tại!");
+                        throw new ResponseStatusException(HttpStatus.CONFLICT, "Email đã tồn tại!");
                 }
 
+                otpService.verifyOtpOrThrow(request.email(), request.otp());
+
                 // gender phải có giá trị hợp lệ và không vượt quá 10 ký tự
-                String genderValue = (request.gender() != null && !request.gender().isBlank())
-                                ? request.gender().toUpperCase()
-                                : "OTHER";
-                if (genderValue.length() > 10) {
-                        genderValue = genderValue.substring(0, 10);
-                }
+                String genderValue = normalizeGender(request.gender());
 
                 Role userRole = roleRepository.findByName("USER")
                                 .orElseThrow(() -> new RuntimeException("Role USER không tồn tại"));
@@ -117,5 +117,14 @@ public class AuthService {
 
         private Collection<? extends GrantedAuthority> getAuthorities(Role role) {
                 return List.of(new SimpleGrantedAuthority("ROLE_" + role.getName()));
+        }
+
+        private String normalizeGender(String gender) {
+                if (gender == null || gender.isBlank()) {
+                        return "OTHER";
+                }
+
+                String normalized = gender.trim().toUpperCase();
+                return ALLOWED_GENDERS.contains(normalized) ? normalized : "OTHER";
         }
 }
