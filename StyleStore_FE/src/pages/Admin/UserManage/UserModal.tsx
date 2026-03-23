@@ -24,26 +24,11 @@ interface UserForm {
 	status?: string;
 }
 
-type UsersPageResponse = {
-	content: AdminUser[];
-};
-
 const normalizeRole = (role: unknown): AdminRole | null => {
 	if (!role || typeof role !== 'object') return null;
 	const maybeRole = role as { id?: unknown; name?: unknown };
 	if (typeof maybeRole.id !== 'number' || typeof maybeRole.name !== 'string') return null;
 	return { id: maybeRole.id, name: maybeRole.name };
-};
-
-const getUniqueRoles = (users: AdminUser[]): AdminRole[] => {
-	const roleMap = new Map<number, AdminRole>();
-	for (const user of users) {
-		const role = normalizeRole(user.role);
-		if (role && !roleMap.has(role.id)) {
-			roleMap.set(role.id, role);
-		}
-	}
-	return Array.from(roleMap.values());
 };
 
 const UserModal: React.FC<UserModalProps> = ({ isOpen, userId, onClose, onSaved }) => {
@@ -60,7 +45,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, userId, onClose, onSaved 
 		const fetchRoles = async () => {
 			try {
 				const authHeaders = buildAuthHeaders();
-				const res = await fetch('http://localhost:8080/api/admin/users?page=0&size=200&sortBy=createdAt&sortDir=desc', {
+				const res = await fetch('http://localhost:8080/api/admin/roles', {
 					headers: {
 						'Content-Type': 'application/json',
 						...authHeaders,
@@ -68,9 +53,8 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, userId, onClose, onSaved 
 				});
 
 				if (!res.ok) return;
-				const data: ApiResponse<UsersPageResponse> = await res.json();
-				const roleOptions = getUniqueRoles(data.data?.content || []);
-				setRoles(roleOptions);
+				const data: ApiResponse<AdminRole[]> = await res.json();
+				setRoles(data.data || []);
 			} catch {
 				setRoles([]);
 			}
