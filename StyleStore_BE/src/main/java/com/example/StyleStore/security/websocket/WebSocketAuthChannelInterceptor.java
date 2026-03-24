@@ -1,4 +1,4 @@
-package com.example.StyleStore.config;
+package com.example.StyleStore.security.websocket;
 
 import com.example.StyleStore.service.JwtService;
 import org.springframework.messaging.Message;

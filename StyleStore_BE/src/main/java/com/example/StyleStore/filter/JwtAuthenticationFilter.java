@@ -1,4 +1,4 @@
-package com.example.StyleStore.config;
+package com.example.StyleStore.filter;
 
 import com.example.StyleStore.service.JwtService;
 import jakarta.servlet.FilterChain;

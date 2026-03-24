@@ -1,4 +1,4 @@
-package com.example.StyleStore.config;
+package com.example.StyleStore.handler;
 
 import com.example.StyleStore.service.OAuth2UserService;
 import lombok.RequiredArgsConstructor;
