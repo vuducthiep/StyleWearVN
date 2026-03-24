@@ -1,19 +1,21 @@
 package com.example.StyleStore.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OtpMailService {
 
     private final JavaMailSender mailSender;
 
+    @Async("mailTaskExecutor")
     public void sendOtpEmail(String email, String otp) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -21,9 +23,9 @@ public class OtpMailService {
             message.setSubject("Your OTP Code");
             message.setText("Your OTP is: " + otp);
             mailSender.send(message);
+            log.info("OTP email sent successfully to {}", email);
         } catch (MailException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Không thể gửi OTP. Vui lòng thử lại sau");
+            log.error("Không thể gửi OTP tới {}: {}", email, ex.getMessage());
         }
     }
 }
