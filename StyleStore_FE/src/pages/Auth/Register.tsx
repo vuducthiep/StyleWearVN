@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Phone, Eye, EyeOff, ShieldCheck, X } from 'lucide-react';
+import { Mail, Lock, User, Phone, Eye, EyeOff, ShieldCheck, X, MapPin } from 'lucide-react';
 import logo from '../../assets/Logo.jpg';
+import vietnamAddress from '../../vietnamAddress.json';
 
 interface RegisterFormData {
     fullName: string;
@@ -9,6 +10,8 @@ interface RegisterFormData {
     password: string;
     confirmPassword: string;
     phoneNumber: string;
+    gender: string;
+    streetAddress: string;
 }
 
 interface ApiResponse {
@@ -25,7 +28,12 @@ const Register: React.FC = () => {
         password: '',
         confirmPassword: '',
         phoneNumber: '',
+        gender: 'OTHER',
+        streetAddress: '',
     });
+    const [selectedProvinceId, setSelectedProvinceId] = useState('');
+    const [selectedDistrictId, setSelectedDistrictId] = useState('');
+    const [selectedWardId, setSelectedWardId] = useState('');
     const [otp, setOtp] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -159,6 +167,17 @@ const Register: React.FC = () => {
         setError('');
         setSuccess('');
 
+        const selectedProvince = (vietnamAddress as any[]).find((p: any) => p.Id === selectedProvinceId);
+        const selectedDistrict = selectedProvince?.Districts.find((d: any) => d.Id === selectedDistrictId);
+        const selectedWard = selectedDistrict?.Wards.find((w: any) => w.Id === selectedWardId);
+
+        const fullAddress = [
+            formData.streetAddress,
+            selectedWard?.Name,
+            selectedDistrict?.Name,
+            selectedProvince?.Name
+        ].filter(Boolean).join(', ');
+
         try {
             const response = await fetch(`${API_BASE}/register`, {
                 method: 'POST',
@@ -171,7 +190,8 @@ const Register: React.FC = () => {
                     otp,
                     password: formData.password,
                     phoneNumber: formData.phoneNumber || null,
-                    gender: 'OTHER',
+                    gender: formData.gender,
+                    address: fullAddress || null,
                 }),
             });
 
@@ -303,6 +323,84 @@ const Register: React.FC = () => {
                                         value={formData.phoneNumber}
                                         onChange={handleChange}
                                         placeholder="0912345678"
+                                        className="w-full pl-10 pr-4 py-3 rounded-lg border border-white/30 bg-white/10 text-white placeholder-white/60 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Gender Field */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">
+                                    Giới tính (không bắt buộc)
+                                </label>
+                                <div className="flex gap-6">
+                                    <label className="flex items-center text-white cursor-pointer">
+                                        <input type="radio" name="gender" value="MALE" checked={formData.gender === 'MALE'} onChange={handleChange} className="mr-2 h-4 w-4 text-cyan-400 focus:ring-cyan-400 border-white/30" /> Nam
+                                    </label>
+                                    <label className="flex items-center text-white cursor-pointer">
+                                        <input type="radio" name="gender" value="FEMALE" checked={formData.gender === 'FEMALE'} onChange={handleChange} className="mr-2 h-4 w-4 text-cyan-400 focus:ring-cyan-400 border-white/30" /> Nữ
+                                    </label>
+                                    <label className="flex items-center text-white cursor-pointer">
+                                        <input type="radio" name="gender" value="OTHER" checked={formData.gender === 'OTHER'} onChange={handleChange} className="mr-2 h-4 w-4 text-cyan-400 focus:ring-cyan-400 border-white/30" /> Khác
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Address Fields */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-200 mb-1">
+                                    Địa chỉ (không bắt buộc)
+                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                                    <select
+                                        value={selectedProvinceId}
+                                        onChange={(e) => {
+                                            setSelectedProvinceId(e.target.value);
+                                            setSelectedDistrictId('');
+                                            setSelectedWardId('');
+                                        }}
+                                        className="w-full px-3 py-3 rounded-lg border border-white/30 bg-slate-800 text-white shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                                    >
+                                        <option value="">Chọn Tỉnh/Thành</option>
+                                        {vietnamAddress.map((p: any) => (
+                                            <option key={p.Id} value={p.Id}>{p.Name}</option>
+                                        ))}
+                                    </select>
+                                    <select
+                                        value={selectedDistrictId}
+                                        onChange={(e) => {
+                                            setSelectedDistrictId(e.target.value);
+                                            setSelectedWardId('');
+                                        }}
+                                        disabled={!selectedProvinceId}
+                                        className="w-full px-3 py-3 rounded-lg border border-white/30 bg-slate-800 text-white shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cyan-400 transition disabled:opacity-50"
+                                    >
+                                        <option value="">Chọn Quận/Huyện</option>
+                                        {selectedProvinceId && (vietnamAddress as any[]).find(p => p.Id === selectedProvinceId)?.Districts.map((d: any) => (
+                                            <option key={d.Id} value={d.Id}>{d.Name}</option>
+                                        ))}
+                                    </select>
+                                    <select
+                                        value={selectedWardId}
+                                        onChange={(e) => setSelectedWardId(e.target.value)}
+                                        disabled={!selectedDistrictId}
+                                        className="w-full px-3 py-3 rounded-lg border border-white/30 bg-slate-800 text-white shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cyan-400 transition disabled:opacity-50"
+                                    >
+                                        <option value="">Chọn Phường/Xã</option>
+                                        {selectedDistrictId && (vietnamAddress as any[]).find(p => p.Id === selectedProvinceId)?.Districts.find((d: any) => d.Id === selectedDistrictId)?.Wards.map((w: any) => (
+                                            <option key={w.Id} value={w.Id}>{w.Name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="relative">
+                                    <MapPin className="absolute left-3 top-3 text-gray-400" size={20} />
+                                    <input
+                                        id="streetAddress"
+                                        type="text"
+                                        name="streetAddress"
+                                        value={formData.streetAddress}
+                                        onChange={handleChange}
+                                        placeholder="Số nhà, tên đường cụ thể..."
                                         className="w-full pl-10 pr-4 py-3 rounded-lg border border-white/30 bg-white/10 text-white placeholder-white/60 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
                                     />
                                 </div>

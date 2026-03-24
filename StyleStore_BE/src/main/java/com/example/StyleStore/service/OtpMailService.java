@@ -20,7 +20,7 @@ public class OtpMailService {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(email);
-            message.setSubject("Your OTP Code");
+            message.setSubject("Your OTP Code in StyleWearVN");
             message.setText("Your OTP is: " + otp);
             mailSender.send(message);
             log.info("OTP email sent successfully to {}", email);
