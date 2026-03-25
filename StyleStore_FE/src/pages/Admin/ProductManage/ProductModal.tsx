@@ -28,6 +28,7 @@ interface ProductForm {
     description?: string;
     gender?: string;
     brand?: string;
+    material?: string;
     price: number | '';
     thumbnail?: string;
     status?: string;
@@ -49,7 +50,7 @@ type SizeOption = { id: number; name: string };
 type AdminProductDetail = AdminProduct & { productSizes?: ProductSizeDto[] };
 
 const ProductModal: React.FC<ProductModalProps> = ({ isOpen, productId, onClose, onSaved }) => {
-    const [form, setForm] = useState<ProductForm>({ name: '', description: '', gender: '', price: '', thumbnail: '', status: 'ACTIVE' });
+    const [form, setForm] = useState<ProductForm>({ name: '', description: '', gender: '', brand: '', material: '', price: '', thumbnail: '', status: 'ACTIVE' });
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -139,7 +140,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, productId, onClose,
         if (!isOpen) return;
         if (!productId) {
             // Reset form for creating new product
-            setForm({ name: '', description: '', gender: '', brand: '', price: '', thumbnail: '', status: 'ACTIVE' });
+            setForm({ name: '', description: '', gender: '', brand: '', material: '', price: '', thumbnail: '', status: 'ACTIVE' });
             setProductDetailSizes(null);
             setImageFile(null);
             setImagePreview('');
@@ -181,6 +182,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, productId, onClose,
                     description: product.description || '',
                     gender: product.gender || '',
                     brand: product.brand || '',
+                    material: product.material || '',
                     price: product.price || '',
                     thumbnail: product.thumbnail || '',
                     status: product.status || 'ACTIVE',
@@ -404,7 +406,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, productId, onClose,
                                         rows={3}
                                     />
                                 </label>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <label className="text-sm text-slate-700">
                                         Giới tính
                                         <select
@@ -426,6 +428,16 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, productId, onClose,
                                             value={form.brand || ''}
                                             onChange={(e) => handleChange('brand', e.target.value)}
                                             placeholder="Nhập tên thương hiệu"
+                                        />
+                                    </label>
+                                    <label className="text-sm text-slate-700">
+                                        Chất liệu
+                                        <input
+                                            type="text"
+                                            className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                                            value={form.material || ''}
+                                            onChange={(e) => handleChange('material', e.target.value)}
+                                            placeholder="Nhập chất liệu"
                                         />
                                     </label>
                                 </div>

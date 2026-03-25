@@ -94,6 +94,7 @@ public class ProductServiceImpl implements ProductService {
                     if (newProduct.getDescription() != null) product.setDescription(newProduct.getDescription());
                     if (newProduct.getGender() != null) product.setGender(newProduct.getGender());
                     if (newProduct.getBrand() != null) product.setBrand(newProduct.getBrand());
+                    if (newProduct.getMaterial() != null) product.setMaterial(newProduct.getMaterial());
                     if (newProduct.getPrice() != null) product.setPrice(newProduct.getPrice());
                     if (newProduct.getThumbnail() != null) product.setThumbnail(newProduct.getThumbnail());
                     if (newProduct.getStatus() != null) product.setStatus(newProduct.getStatus());

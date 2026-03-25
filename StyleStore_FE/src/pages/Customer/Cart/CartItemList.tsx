@@ -10,6 +10,7 @@ interface Product {
     name: string;
     price: number;
     thumbnail: string;
+    material?: string;
 }
 
 interface CartItem {

@@ -32,6 +32,7 @@ export interface AdminProduct {
     description?: string;
     gender?: string;
     brand?: string;
+    material?: string;
     price: number;
     thumbnail?: string;
     status?: string;
@@ -221,6 +222,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ refreshKey = 0, onEdit }) =
                 { header: 'ID', key: 'id', width: 10 },
                 { header: 'Ten san pham', key: 'name', width: 40 },
                 { header: 'Thuong hieu', key: 'brand', width: 20 },
+                { header: 'Chat lieu', key: 'material', width: 20 },
                 { header: 'Danh muc', key: 'category', width: 24 },
                 { header: 'Gia', key: 'price', width: 16 },
                 { header: 'Ton kho', key: 'stock', width: 12 },
@@ -235,6 +237,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ refreshKey = 0, onEdit }) =
                     id: product.id,
                     name: product.name,
                     brand: product.brand || '-',
+                    material: product.material || '-',
                     category: product.category?.name || '-',
                     price: product.price || 0,
                     stock: product.totalStock,
@@ -334,8 +337,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ refreshKey = 0, onEdit }) =
                                 <th className="px-4 py-2 text-left">ID</th>
                                 <th className="px-4 py-2 text-left">Hình ảnh</th>
                                 <th className="px-4 py-2 text-left">Tên sản phẩm</th>
-                                <th className="px-4 py-2 text-left">Thương hiệu</th>
-                                <th className="px-4 py-2 text-left">Giới tính</th>
+                                <th className="px-4 py-2 text-left">Thương hiệu</th>                                <th className="px-4 py-2 text-left">Giới tính</th>
                                 <th className="px-4 py-2 text-left">Giá</th>
                                 <th className="px-4 py-2 text-left">Danh mục</th>
                                 <th className="px-4 py-2 text-left">Trạng thái</th>
