@@ -61,6 +61,28 @@ public class Admin_PromotionController {
         }
     }
 
+    @GetMapping("/available")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Page<PromotionResponse>>> getAvailablePromotions(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            Sort sort = sortDir.equalsIgnoreCase("asc")
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+
+            PageRequest pageable = PageRequest.of(page, size, sort);
+            Page<PromotionResponse> promotions = promotionService.getAvailablePromotions(pageable, keyword);
+            return ResponseEntity.ok(ApiResponse.ok("Lấy danh sách khuyến mãi khả dụng thành công", promotions));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.fail("Lỗi lấy khuyến mãi khả dụng: " + e.getMessage()));
+        }
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PromotionResponse>> createPromotion(@RequestBody PromotionResponse request) {

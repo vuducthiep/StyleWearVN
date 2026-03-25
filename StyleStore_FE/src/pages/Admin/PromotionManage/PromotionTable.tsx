@@ -58,8 +58,9 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
     const [error, setError] = useState('');
     const [searchInput, setSearchInput] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
+    const [onlyAvailable, setOnlyAvailable] = useState(false);
 
-    const fetchPromotions = useCallback(async (pageIndex = 0, keywordParam = searchKeyword) => {
+    const fetchPromotions = useCallback(async (pageIndex = 0, keywordParam = searchKeyword, availableOnlyParam = onlyAvailable) => {
         setIsLoading(true);
         setError('');
 
@@ -75,9 +76,11 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
             if (keyword) {
                 queryParams.set('keyword', keyword);
             }
-            const endpoint = keyword
-                ? `http://localhost:8080/api/admin/promotions/search?${queryParams.toString()}`
-                : `http://localhost:8080/api/admin/promotions?${queryParams.toString()}`;
+            const endpoint = availableOnlyParam
+                ? `http://localhost:8080/api/admin/promotions/available?${queryParams.toString()}`
+                : (keyword
+                    ? `http://localhost:8080/api/admin/promotions/search?${queryParams.toString()}`
+                    : `http://localhost:8080/api/admin/promotions?${queryParams.toString()}`);
             const res = await fetch(
                 endpoint,
                 {
@@ -102,6 +105,14 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
             }
 
             const pageData = data.data;
+            if (isPageData<AdminPromotion>(pageData)) {
+                setPromotions(pageData.content || []);
+                setPage(pageData.number ?? pageIndex);
+                setTotalPages(pageData.totalPages || 0);
+                setTotalElements(pageData.totalElements || 0);
+                return;
+            }
+
             if (Array.isArray(pageData)) {
                 const total = pageData.length;
                 const pages = total > 0 ? Math.ceil(total / PAGE_SIZE) : 0;
@@ -113,14 +124,6 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
                 setTotalElements(total);
                 setTotalPages(pages);
                 setPage(safePageIndex);
-                return;
-            }
-
-            if (isPageData<AdminPromotion>(pageData)) {
-                setPromotions(pageData.content || []);
-                setPage(pageData.number ?? pageIndex);
-                setTotalPages(pageData.totalPages || 0);
-                setTotalElements(pageData.totalElements || 0);
                 return;
             }
 
@@ -137,21 +140,22 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
         } finally {
             setIsLoading(false);
         }
-    }, [searchKeyword]);
+    }, [searchKeyword, onlyAvailable]);
 
     useEffect(() => {
-        fetchPromotions(page, searchKeyword);
+        fetchPromotions(page, searchKeyword, onlyAvailable);
     }, [fetchPromotions, page, refreshKey]);
 
     useEffect(() => {
         setPage(0);
         setSearchInput('');
         setSearchKeyword('');
+        setOnlyAvailable(false);
     }, [refreshKey]);
 
     const handlePageChange = (nextPage: number) => {
         setPage(nextPage);
-        fetchPromotions(nextPage, searchKeyword);
+        fetchPromotions(nextPage, searchKeyword, onlyAvailable);
     };
 
     const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -159,14 +163,21 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
         const keyword = searchInput.trim();
         setSearchKeyword(keyword);
         setPage(0);
-        fetchPromotions(0, keyword);
+        fetchPromotions(0, keyword, onlyAvailable);
     };
 
     const handleClearSearch = () => {
         setSearchInput('');
         setSearchKeyword('');
         setPage(0);
-        fetchPromotions(0, '');
+        fetchPromotions(0, '', onlyAvailable);
+    };
+
+    const handleToggleAvailable = () => {
+        const next = !onlyAvailable;
+        setOnlyAvailable(next);
+        setPage(0);
+        fetchPromotions(0, searchKeyword, next);
     };
 
     return (
@@ -176,12 +187,22 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
                 <div className="flex items-center gap-2">
                     {error && (
                         <button
-                            onClick={() => fetchPromotions(page, searchKeyword)}
+                            onClick={() => fetchPromotions(page, searchKeyword, onlyAvailable)}
                             className="text-sm px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200"
                         >
                             Thử lại
                         </button>
                     )}
+                    <button
+                        type="button"
+                        onClick={handleToggleAvailable}
+                        className={`px-3 py-1.5 rounded text-sm font-medium transition ${onlyAvailable
+                            ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                            : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
+                            }`}
+                    >
+                        {onlyAvailable ? 'Đang lọc: Khả dụng' : 'Lọc khả dụng'}
+                    </button>
                     <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
                         <input
                             type="text"

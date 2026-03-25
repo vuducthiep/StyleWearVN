@@ -27,4 +27,21 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 
     List<Promotion> findByIsActiveTrueAndStartAtLessThanEqualAndEndAtGreaterThanEqual(LocalDateTime startAt,
             LocalDateTime endAt);
+
+    @Query("""
+            SELECT p
+            FROM Promotion p
+            WHERE p.isActive = true
+              AND p.startAt <= :now
+              AND p.endAt >= :now
+              AND (
+                    :keyword = ''
+                    OR LOWER(p.code) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              )
+            """)
+    Page<Promotion> findAvailablePromotions(@Param("now") LocalDateTime now,
+            @Param("keyword") String keyword,
+            Pageable pageable);
 }

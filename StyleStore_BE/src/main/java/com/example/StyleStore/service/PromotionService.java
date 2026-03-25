@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface PromotionService {
     List<PromotionResponse> getAvailablePromotions();
+    Page<PromotionResponse> getAvailablePromotions(Pageable pageable, String keyword);
     Page<PromotionResponse> getAllPromotions(Pageable pageable);
     Page<PromotionResponse> searchPromotions(String keyword, Pageable pageable);
     PromotionResponse createPromotion(PromotionResponse request);
