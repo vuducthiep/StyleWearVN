@@ -278,7 +278,7 @@ const SupportChatPage = () => {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 h-[calc(100vh-6rem)] flex overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 h-[calc(100vh-4rem)] flex overflow-hidden">
             <div className="w-80 border-r border-gray-200 flex flex-col">
                 <div className="px-4 py-3 border-b border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-800">Hỗ trợ khách hàng</h2>

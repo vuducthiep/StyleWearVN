@@ -1,6 +1,7 @@
 package com.example.StyleStore.controller.admin;
 
 import com.example.StyleStore.dto.response.ApiResponse;
+import com.example.StyleStore.dto.response.AdminUserResponse;
 import com.example.StyleStore.model.User;
 import com.example.StyleStore.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,7 @@ public class Admin_UserController {
 
     // for test api - only ADMIN can access (with pagination)
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<User>>> getAllUsers(
+    public ResponseEntity<ApiResponse<Page<AdminUserResponse>>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -42,12 +43,12 @@ public class Admin_UserController {
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<User> result = userService.getUsers(pageable);
+        Page<AdminUserResponse> result = userService.getUsers(pageable).map(AdminUserResponse::from);
         return ResponseEntity.ok(ApiResponse.ok("Lấy danh sách người dùng thành công", result));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse<Page<User>>> searchUsers(
+        public ResponseEntity<ApiResponse<Page<AdminUserResponse>>> searchUsers(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -58,26 +59,27 @@ public class Admin_UserController {
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<User> result = userService.searchUsersByFullNameOrEmail(keyword, pageable);
+        Page<AdminUserResponse> result = userService.searchUsersByFullNameOrEmail(keyword, pageable)
+                .map(AdminUserResponse::from);
         return ResponseEntity.ok(ApiResponse.ok("Tìm kiếm người dùng thành công", result));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<AdminUserResponse>> getUserById(@PathVariable Long id) {
         Optional<User> user = userService.getUserById(id);
         return user
-                .map(u -> ResponseEntity.ok(ApiResponse.ok("Lấy người dùng thành công", u)))
+                .map(u -> ResponseEntity.ok(ApiResponse.ok("Lấy người dùng thành công", AdminUserResponse.from(u))))
                 .orElseGet(() -> ResponseEntity.status(404).body(ApiResponse.fail("Không tìm thấy người dùng")));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<User>> updateUser(@PathVariable Long id, @RequestBody User newUser) {
+    public ResponseEntity<ApiResponse<AdminUserResponse>> updateUser(@PathVariable Long id, @RequestBody User newUser) {
         if (newUser == null) {
             return ResponseEntity.badRequest().body(ApiResponse.fail("Yêu cầu không hợp lệ"));
         }
         try {
             User updatedUser = userService.updateUser(id, newUser);
-            return ResponseEntity.ok(ApiResponse.ok("Cập nhật người dùng thành công", updatedUser));
+            return ResponseEntity.ok(ApiResponse.ok("Cập nhật người dùng thành công", AdminUserResponse.from(updatedUser)));
         } catch (RuntimeException e) {
             return ResponseEntity.status(404).body(ApiResponse.fail("Không tìm thấy người dùng"));
         }
