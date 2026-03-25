@@ -37,6 +37,11 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
+    public Page<PromotionResponse> searchPromotions(String keyword, Pageable pageable) {
+        return promotionRepository.searchByKeyword(keyword, pageable).map(this::toDto);
+    }
+
+    @Override
     public PromotionResponse createPromotion(PromotionResponse request) {
         validatePromotionRequest(request);
 

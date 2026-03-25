@@ -56,15 +56,30 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
     const [totalElements, setTotalElements] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [searchInput, setSearchInput] = useState('');
+    const [searchKeyword, setSearchKeyword] = useState('');
 
-    const fetchPromotions = useCallback(async (pageIndex = 0) => {
+    const fetchPromotions = useCallback(async (pageIndex = 0, keywordParam = searchKeyword) => {
         setIsLoading(true);
         setError('');
 
         try {
             const authHeaders = buildAuthHeaders();
+            const keyword = keywordParam.trim();
+            const queryParams = new URLSearchParams({
+                page: String(pageIndex),
+                size: String(PAGE_SIZE),
+                sortBy: 'createdAt',
+                sortDir: 'desc',
+            });
+            if (keyword) {
+                queryParams.set('keyword', keyword);
+            }
+            const endpoint = keyword
+                ? `http://localhost:8080/api/admin/promotions/search?${queryParams.toString()}`
+                : `http://localhost:8080/api/admin/promotions?${queryParams.toString()}`;
             const res = await fetch(
-                `http://localhost:8080/api/admin/promotions?page=${pageIndex}&size=${PAGE_SIZE}&sortBy=createdAt&sortDir=desc`,
+                endpoint,
                 {
                     headers: {
                         'Content-Type': 'application/json',
@@ -122,19 +137,36 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [searchKeyword]);
 
     useEffect(() => {
-        fetchPromotions(page);
+        fetchPromotions(page, searchKeyword);
     }, [fetchPromotions, page, refreshKey]);
 
     useEffect(() => {
         setPage(0);
+        setSearchInput('');
+        setSearchKeyword('');
     }, [refreshKey]);
 
     const handlePageChange = (nextPage: number) => {
         setPage(nextPage);
-        fetchPromotions(nextPage);
+        fetchPromotions(nextPage, searchKeyword);
+    };
+
+    const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const keyword = searchInput.trim();
+        setSearchKeyword(keyword);
+        setPage(0);
+        fetchPromotions(0, keyword);
+    };
+
+    const handleClearSearch = () => {
+        setSearchInput('');
+        setSearchKeyword('');
+        setPage(0);
+        fetchPromotions(0, '');
     };
 
     return (
@@ -144,18 +176,42 @@ const PromotionTable: React.FC<PromotionTableProps> = ({ refreshKey = 0, onEdit 
                 <div className="flex items-center gap-2">
                     {error && (
                         <button
-                            onClick={() => fetchPromotions(page)}
+                            onClick={() => fetchPromotions(page, searchKeyword)}
                             className="text-sm px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200"
                         >
                             Thử lại
                         </button>
                     )}
-                    <button
-                        onClick={() => fetchPromotions(page)}
+                    <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            value={searchInput}
+                            onChange={(event) => setSearchInput(event.target.value)}
+                            placeholder="Mã / tên / mô tả"
+                            className="w-56 px-2 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                        />
+                        <button
+                            type="submit"
+                            className="px-3 py-1.5 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
+                        >
+                            Tìm
+                        </button>
+                        {searchKeyword && (
+                            <button
+                                type="button"
+                                onClick={handleClearSearch}
+                                className="px-3 py-1.5 rounded border border-slate-300 text-slate-700 text-sm hover:bg-slate-50 transition"
+                            >
+                                Xóa
+                            </button>
+                        )}
+                    </form>
+                    {/* <button
+                        onClick={() => fetchPromotions(page, searchKeyword)}
                         className="px-4 py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
                     >
                         Tải lại
-                    </button>
+                    </button> */}
                 </div>
             </div>
 
