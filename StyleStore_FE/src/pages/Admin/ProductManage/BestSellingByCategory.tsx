@@ -17,6 +17,8 @@ interface BestSellingProduct {
     totalSold: number;
 }
 
+let bestSellingInFlightRequest: Promise<StatsResponse<BestSellingProduct[]>> | null = null;
+
 const BestSellingByCategory = () => {
     const [items, setItems] = useState<BestSellingProduct[]>([]);
     const [loading, setLoading] = useState(true);
@@ -32,21 +34,29 @@ const BestSellingByCategory = () => {
                     throw new Error('No authentication token found. Please log in again.');
                 }
 
-                const response = await fetch(
-                    'http://localhost:8080/api/admin/stats/best-selling-product-in-categories',
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json',
-                        }
-                    }
-                );
+                if (!bestSellingInFlightRequest) {
+                    bestSellingInFlightRequest = (async () => {
+                        const response = await fetch(
+                            'http://localhost:8080/api/admin/stats/best-selling-product-in-categories',
+                            {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json',
+                                }
+                            }
+                        );
 
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch best-selling products: ${response.status}`);
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch best-selling products: ${response.status}`);
+                        }
+
+                        return (await response.json()) as StatsResponse<BestSellingProduct[]>;
+                    })().finally(() => {
+                        bestSellingInFlightRequest = null;
+                    });
                 }
 
-                const data = (await response.json()) as StatsResponse<BestSellingProduct[]>;
+                const data = await bestSellingInFlightRequest;
                 setItems(data.data ?? []);
                 setError(null);
             } catch (err) {

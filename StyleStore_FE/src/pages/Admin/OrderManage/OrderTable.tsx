@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ConfirmDialog from '../../../components/ConfirmDialog';
 import { useToast } from '../../../components/ToastProvider';
 import { buildAuthHeaders, isAuthTokenMissingError } from '../../../services/auth';
@@ -45,6 +45,7 @@ const OrderTable: React.FC<OrderTableProps> = ({ refreshKey = 0, onViewDetail })
     const [size] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
+    const lastEffectFetchKeyRef = useRef<string | null>(null);
     const [confirmState, setConfirmState] = useState<{
         open: boolean;
         action?: 'confirm' | 'cancel';
@@ -88,7 +89,6 @@ const OrderTable: React.FC<OrderTableProps> = ({ refreshKey = 0, onViewDetail })
             }
 
             setOrders(pageData.content || []);
-            setPage(pageData.number ?? pageIndex);
             setTotalPages(pageData.totalPages ?? 0);
             setTotalElements(pageData.totalElements ?? 0);
         } catch (e) {
@@ -104,12 +104,17 @@ const OrderTable: React.FC<OrderTableProps> = ({ refreshKey = 0, onViewDetail })
     }, [size]);
 
     useEffect(() => {
+        const fetchKey = `${page}-${refreshKey}`;
+        if (lastEffectFetchKeyRef.current === fetchKey) {
+            return;
+        }
+
+        lastEffectFetchKeyRef.current = fetchKey;
         fetchOrders(page);
     }, [fetchOrders, page, refreshKey]);
 
     const handlePageChange = (nextPage: number) => {
         setPage(nextPage);
-        fetchOrders(nextPage);
     };
 
     const getStatusColor = (status: string) => {

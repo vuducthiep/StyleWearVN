@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { buildAuthHeaders, isAuthTokenMissingError } from '../../../services/auth';
 
 type ApiResponse<T> = {
@@ -25,6 +25,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({ refreshKey = 0, onEdit })
     const [categories, setCategories] = useState<AdminCategory[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const lastEffectFetchKeyRef = useRef<string | null>(null);
 
     const fetchCategories = useCallback(async () => {
         setIsLoading(true);
@@ -67,6 +68,12 @@ const CategoryTable: React.FC<CategoryTableProps> = ({ refreshKey = 0, onEdit })
     }, []);
 
     useEffect(() => {
+        const fetchKey = `${refreshKey}`;
+        if (lastEffectFetchKeyRef.current === fetchKey) {
+            return;
+        }
+
+        lastEffectFetchKeyRef.current = fetchKey;
         fetchCategories();
     }, [fetchCategories, refreshKey]);
 

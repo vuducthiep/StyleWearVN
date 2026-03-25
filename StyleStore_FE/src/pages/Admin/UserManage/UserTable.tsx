@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { buildAuthHeaders, isAuthTokenMissingError } from '../../../services/auth';
 
 type ApiResponse<T> = {
@@ -58,6 +58,7 @@ const UserTable: React.FC<UserTableProps> = ({ refreshKey = 0, onEdit }) => {
     const [size] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
+    const lastEffectFetchKeyRef = useRef<string | null>(null);
 
     const fetchUsers = useCallback(async (pageIndex = 0, keywordParam = searchKeyword) => {
         setIsLoading(true);
@@ -108,7 +109,6 @@ const UserTable: React.FC<UserTableProps> = ({ refreshKey = 0, onEdit }) => {
             }
 
             setUsers(normalizeUsers(pageData.content || []));
-            setPage(pageData.number ?? pageIndex);
             setTotalPages(pageData.totalPages ?? 0);
             setTotalElements(pageData.totalElements ?? 0);
         } catch (e) {
@@ -124,12 +124,17 @@ const UserTable: React.FC<UserTableProps> = ({ refreshKey = 0, onEdit }) => {
     }, [searchKeyword, size]);
 
     useEffect(() => {
-        fetchUsers(page);
-    }, [fetchUsers, page, refreshKey]);
+        const fetchKey = `${page}-${searchKeyword}-${refreshKey}`;
+        if (lastEffectFetchKeyRef.current === fetchKey) {
+            return;
+        }
+
+        lastEffectFetchKeyRef.current = fetchKey;
+        fetchUsers(page, searchKeyword);
+    }, [fetchUsers, page, refreshKey, searchKeyword]);
 
     const handlePageChange = (nextPage: number) => {
         setPage(nextPage);
-        fetchUsers(nextPage);
     };
 
     const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -137,14 +142,12 @@ const UserTable: React.FC<UserTableProps> = ({ refreshKey = 0, onEdit }) => {
         const keyword = searchInput.trim();
         setSearchKeyword(keyword);
         setPage(0);
-        fetchUsers(0, keyword);
     };
 
     const handleClearSearch = () => {
         setSearchInput('');
         setSearchKeyword('');
         setPage(0);
-        fetchUsers(0, '');
     };
 
     return (

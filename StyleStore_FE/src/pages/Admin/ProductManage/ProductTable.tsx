@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { buildAuthHeaders, isAuthTokenMissingError } from '../../../services/auth';
 
 type ApiResponse<T> = {
@@ -59,6 +59,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ refreshKey = 0, onEdit }) =
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
     const [exportLoading, setExportLoading] = useState(false);
+    const lastEffectFetchKeyRef = useRef<string | null>(null);
 
     const fetchProducts = useCallback(async (pageIndex = 0, keywordParam = searchKeyword) => {
         setIsLoading(true);
@@ -109,7 +110,6 @@ const ProductTable: React.FC<ProductTableProps> = ({ refreshKey = 0, onEdit }) =
             }
 
             setProducts(pageData.content || []);
-            setPage(pageData.number ?? pageIndex);
             setTotalPages(pageData.totalPages ?? 0);
             setTotalElements(pageData.totalElements ?? 0);
         } catch (e) {
@@ -125,12 +125,17 @@ const ProductTable: React.FC<ProductTableProps> = ({ refreshKey = 0, onEdit }) =
     }, [searchKeyword, size]);
 
     useEffect(() => {
-        fetchProducts(page);
-    }, [fetchProducts, page, refreshKey]);
+        const fetchKey = `${page}-${searchKeyword}-${refreshKey}`;
+        if (lastEffectFetchKeyRef.current === fetchKey) {
+            return;
+        }
+
+        lastEffectFetchKeyRef.current = fetchKey;
+        fetchProducts(page, searchKeyword);
+    }, [fetchProducts, page, refreshKey, searchKeyword]);
 
     const handlePageChange = (nextPage: number) => {
         setPage(nextPage);
-        fetchProducts(nextPage);
     };
 
     const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -138,14 +143,12 @@ const ProductTable: React.FC<ProductTableProps> = ({ refreshKey = 0, onEdit }) =
         const keyword = searchInput.trim();
         setSearchKeyword(keyword);
         setPage(0);
-        fetchProducts(0, keyword);
     };
 
     const handleClearSearch = () => {
         setSearchInput('');
         setSearchKeyword('');
         setPage(0);
-        fetchProducts(0, '');
     };
 
     const handleExportInvoice = useCallback(async () => {
@@ -337,7 +340,8 @@ const ProductTable: React.FC<ProductTableProps> = ({ refreshKey = 0, onEdit }) =
                                 <th className="px-4 py-2 text-left">ID</th>
                                 <th className="px-4 py-2 text-left">Hình ảnh</th>
                                 <th className="px-4 py-2 text-left">Tên sản phẩm</th>
-                                <th className="px-4 py-2 text-left">Thương hiệu</th>                                <th className="px-4 py-2 text-left">Giới tính</th>
+                                <th className="px-4 py-2 text-left">Thương hiệu</th>
+                                <th className="px-4 py-2 text-left">Giới tính</th>
                                 <th className="px-4 py-2 text-left">Giá</th>
                                 <th className="px-4 py-2 text-left">Danh mục</th>
                                 <th className="px-4 py-2 text-left">Trạng thái</th>
