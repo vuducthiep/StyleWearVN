@@ -24,19 +24,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.example.StyleStore.service.RedisService;
-import java.time.Duration;
 
 @Service
 public class UserServiceImpl implements UserService {
 
-    private final RedisService redisService;
 
-    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, RedisService redisService) {
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
-        this.redisService = redisService;
     }
 
     @Autowired
@@ -160,9 +156,7 @@ public class UserServiceImpl implements UserService {
             long count = aggregated.getOrDefault(ym, 0L);
             result.add(new MonthlyUserDto(ym.getYear(), ym.getMonthValue(), count));
         }
-            // Example: Store to Redis as JSON using RedisService
-            // redisService.set("stats:users:monthly", result, Duration.ofMinutes(10));
-            // List cached = redisService.get("stats:users:monthly", List.class);
+        
         return result;
     }
 

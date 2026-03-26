@@ -26,8 +26,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.StyleStore.service.RedisService;
-import java.time.Duration;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -48,17 +47,15 @@ public class OrderServiceImpl implements OrderService {
     private final ProductSizeRepository productSizeRepository;
     private final PromotionRepository promotionRepository;
 
-    private final RedisService redisService;
 
     public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
             ProductRepository productRepository, ProductSizeRepository productSizeRepository,
-            PromotionRepository promotionRepository, RedisService redisService) {
+            PromotionRepository promotionRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
         this.productSizeRepository = productSizeRepository;
         this.promotionRepository = promotionRepository;
-        this.redisService = redisService;
     }
 
     @Override
@@ -118,9 +115,6 @@ public class OrderServiceImpl implements OrderService {
                 twoMonthsAgoRevenue,
                 growth,
                 growthPercentage);
-        // Example: Store to Redis as JSON using RedisService
-        // redisService.set("stats:revenue:growth", dto, Duration.ofMinutes(10));
-        // RevenueGrowthDto cached = redisService.get("stats:revenue:growth", RevenueGrowthDto.class);
         return dto;
     }
 
