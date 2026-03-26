@@ -1,7 +1,10 @@
 package com.example.StyleStore.service.impl;
 
+import com.example.StyleStore.dto.request.auth.ForgotPasswordRequest;
 import com.example.StyleStore.dto.request.auth.LoginRequest;
+import com.example.StyleStore.dto.request.auth.ResetPasswordRequest;
 import com.example.StyleStore.dto.request.auth.RegisterRequest;
+import com.example.StyleStore.dto.request.auth.VerifyOtpRequest;
 import com.example.StyleStore.dto.response.AuthResponse;
 import com.example.StyleStore.model.Role;
 import com.example.StyleStore.model.User;
@@ -23,15 +26,22 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
+import java.time.Duration;
 import java.util.logging.Logger;
 
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+
+        private static final String RESET_TOKEN_KEY_PREFIX = "reset_token:";
+        private static final Duration RESET_TOKEN_TTL = Duration.ofMinutes(5);
 
         private final UserRepository userRepository;
         private final CartRepository cartRepository;
@@ -40,6 +50,7 @@ public class AuthServiceImpl implements AuthService {
         private final JwtService jwtService;
         private final AuthenticationManager authenticationManager;
         private final OtpService otpService;
+        private final RedisTemplate<String, String> redisTemplate;
         private static final Logger logger = Logger.getLogger(AuthServiceImpl.class.getName());
         private static final Set<String> ALLOWED_GENDERS = Set.of("MALE", "FEMALE", "OTHER");
 
@@ -117,6 +128,40 @@ public class AuthServiceImpl implements AuthService {
                 return new AuthResponse(jwt, user.getId(), user.getFullName(), user.getEmail(), user.getRole().getName());
         }
 
+        @Override
+        public void forgotPassword(ForgotPasswordRequest request) {
+                otpService.sendOtpForForgotPassword(request.email());
+        }
+
+        @Override
+        public String verifyOtp(VerifyOtpRequest request) {
+                String email = normalizeEmail(request.email());
+                otpService.verifyForgotPasswordOtpOrThrow(email, request.otp());
+
+                String resetToken = UUID.randomUUID().toString();
+                redisTemplate.opsForValue().set(resetTokenKey(resetToken), email, RESET_TOKEN_TTL);
+                return resetToken;
+        }
+
+        @Override
+        public void resetPassword(ResetPasswordRequest request) {
+                String email = normalizeEmail(request.email());
+                String tokenKey = resetTokenKey(request.resetToken());
+                String tokenEmail = redisTemplate.opsForValue().get(tokenKey);
+
+                if (tokenEmail == null || !tokenEmail.equals(email)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Reset token không hợp lệ hoặc đã hết hạn");
+                }
+
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                                "Yêu cầu đặt lại mật khẩu không hợp lệ"));
+
+                user.setPassword(passwordEncoder.encode(request.newPassword()));
+                userRepository.save(user);
+                redisTemplate.delete(tokenKey);
+        }
+
         private Collection<? extends GrantedAuthority> getAuthorities(Role role) {
                 return List.of(new SimpleGrantedAuthority("ROLE_" + role.getName()));
         }
@@ -127,5 +172,13 @@ public class AuthServiceImpl implements AuthService {
                 }
                 String normalized = gender.trim().toUpperCase();
                 return ALLOWED_GENDERS.contains(normalized) ? normalized : "OTHER";
+        }
+
+        private String normalizeEmail(String email) {
+                return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
+        }
+
+        private String resetTokenKey(String resetToken) {
+                return RESET_TOKEN_KEY_PREFIX + resetToken;
         }
 }

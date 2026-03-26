@@ -420,5 +420,5 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<BestSellingProductsInCategoriesDTO> getBestSellingProductsInCategories() {
         return orderRepository.getBestSellingProductsInCategories();
-    }
+    }    
 }

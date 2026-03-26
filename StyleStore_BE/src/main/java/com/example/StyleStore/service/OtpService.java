@@ -4,7 +4,7 @@ import com.example.StyleStore.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.RedisConnectionFailureException;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,13 +19,14 @@ import java.util.concurrent.TimeUnit;
 public class OtpService {
 
     private static final String OTP_KEY_PREFIX = "auth:otp:code:";
+    private static final String FORGOT_PASSWORD_OTP_KEY_PREFIX = "otp:";
     private static final String OTP_ATTEMPT_KEY_PREFIX = "auth:otp:attempt:";
     private static final String OTP_COOLDOWN_KEY_PREFIX = "auth:otp:cooldown:";
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    private final StringRedisTemplate stringRedisTemplate;
-    private final OtpMailService otpMailService;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final MailService mailService;
     private final UserRepository userRepository;
 
     @Value("${auth.otp.ttl-seconds:300}")
@@ -46,9 +47,9 @@ public class OtpService {
 
         try {
             String cooldownKey = cooldownKey(email);
-            Boolean inCooldown = stringRedisTemplate.hasKey(cooldownKey);
+            Boolean inCooldown = redisTemplate.hasKey(cooldownKey);
             if (Boolean.TRUE.equals(inCooldown)) {
-                Long remainingSeconds = stringRedisTemplate.getExpire(cooldownKey, TimeUnit.SECONDS);
+                Long remainingSeconds = redisTemplate.getExpire(cooldownKey, TimeUnit.SECONDS);
                 if (remainingSeconds == null || remainingSeconds < 0) {
                     remainingSeconds = otpCooldownSeconds;
                 }
@@ -58,11 +59,46 @@ public class OtpService {
 
             String otp = generateOtp();
 
-            stringRedisTemplate.opsForValue().set(otpKey(email), otp, Duration.ofSeconds(otpTtlSeconds));
-            stringRedisTemplate.opsForValue().set(attemptKey(email), "0", Duration.ofSeconds(otpTtlSeconds));
-            stringRedisTemplate.opsForValue().set(cooldownKey, "1", Duration.ofSeconds(otpCooldownSeconds));
+            redisTemplate.opsForValue().set(otpKey(email), otp, Duration.ofSeconds(otpTtlSeconds));
+            redisTemplate.opsForValue().set(attemptKey(email), "0", Duration.ofSeconds(otpTtlSeconds));
+            redisTemplate.opsForValue().set(cooldownKey, "1", Duration.ofSeconds(otpCooldownSeconds));
 
-            otpMailService.sendOtpEmail(email, otp);
+            mailService.sendOtpEmail(email, otp);
+        } catch (RedisConnectionFailureException ex) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Dịch vụ OTP tạm thời không khả dụng. Vui lòng thử lại sau", ex);
+        }
+    }
+
+    public void sendOtpForForgotPassword(String rawEmail) {
+        String email = normalizeEmail(rawEmail);
+
+        if (!userRepository.existsByEmail(email)) {
+            return;
+        }
+
+        try {
+            String otp = generateOtp();
+            redisTemplate.opsForValue().set(forgotPasswordOtpKey(email), otp, Duration.ofMinutes(5));
+            mailService.sendOtpEmail(email, otp);
+        } catch (RedisConnectionFailureException ex) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Dịch vụ OTP tạm thời không khả dụng. Vui lòng thử lại sau", ex);
+        }
+    }
+
+    public void verifyForgotPasswordOtpOrThrow(String rawEmail, String rawOtp) {
+        String email = normalizeEmail(rawEmail);
+        String otp = rawOtp == null ? "" : rawOtp.trim();
+
+        try {
+            String key = forgotPasswordOtpKey(email);
+            String storedOtp = redisTemplate.opsForValue().get(key);
+            if (storedOtp == null || !storedOtp.equals(otp)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OTP không hợp lệ hoặc đã hết hạn");
+            }
+
+            redisTemplate.delete(key);
         } catch (RedisConnectionFailureException ex) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Dịch vụ OTP tạm thời không khả dụng. Vui lòng thử lại sau", ex);
@@ -75,7 +111,7 @@ public class OtpService {
 
         try {
             String otpKey = otpKey(email);
-            String storedOtp = stringRedisTemplate.opsForValue().get(otpKey);
+            String storedOtp = redisTemplate.opsForValue().get(otpKey);
             if (storedOtp == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OTP không hợp lệ hoặc đã hết hạn");
             }
@@ -83,8 +119,8 @@ public class OtpService {
             if (!storedOtp.equals(otp)) {
                 long attempts = increaseAttempt(email);
                 if (attempts >= otpMaxAttempts) {
-                    stringRedisTemplate.delete(otpKey);
-                    stringRedisTemplate.delete(attemptKey(email));
+                    redisTemplate.delete(otpKey);
+                    redisTemplate.delete(attemptKey(email));
                     throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
                             "Bạn đã nhập sai OTP quá số lần cho phép. Vui lòng yêu cầu mã mới");
                 }
@@ -92,8 +128,8 @@ public class OtpService {
                         "OTP không chính xác. Bạn còn " + (otpMaxAttempts - attempts) + " lần thử");
             }
 
-            stringRedisTemplate.delete(otpKey);
-            stringRedisTemplate.delete(attemptKey(email));
+            redisTemplate.delete(otpKey);
+            redisTemplate.delete(attemptKey(email));
         } catch (RedisConnectionFailureException ex) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Dịch vụ OTP tạm thời không khả dụng. Vui lòng thử lại sau", ex);
@@ -104,14 +140,14 @@ public class OtpService {
         String attemptKey = attemptKey(email);
 
         try {
-            Boolean attemptExists = stringRedisTemplate.hasKey(attemptKey);
+            Boolean attemptExists = redisTemplate.hasKey(attemptKey);
             if (Boolean.FALSE.equals(attemptExists)) {
-                Long ttl = stringRedisTemplate.getExpire(otpKey(email), TimeUnit.SECONDS);
+                Long ttl = redisTemplate.getExpire(otpKey(email), TimeUnit.SECONDS);
                 long ttlToUse = (ttl == null || ttl <= 0) ? otpTtlSeconds : ttl;
-                stringRedisTemplate.opsForValue().set(attemptKey, "0", Duration.ofSeconds(ttlToUse));
+                redisTemplate.opsForValue().set(attemptKey, "0", Duration.ofSeconds(ttlToUse));
             }
 
-            Long current = stringRedisTemplate.opsForValue().increment(attemptKey);
+            Long current = redisTemplate.opsForValue().increment(attemptKey);
             return current == null ? 1 : current;
         } catch (RedisConnectionFailureException ex) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
@@ -130,6 +166,10 @@ public class OtpService {
 
     private String otpKey(String email) {
         return OTP_KEY_PREFIX + email;
+    }
+
+    private String forgotPasswordOtpKey(String email) {
+        return FORGOT_PASSWORD_OTP_KEY_PREFIX + email;
     }
 
     private String attemptKey(String email) {

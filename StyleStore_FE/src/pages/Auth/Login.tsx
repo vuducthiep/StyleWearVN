@@ -91,6 +91,11 @@ const Login: React.FC = () => {
         navigate('/signup');
     };
 
+    const handleForgotPasswordClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        navigate('/forgot-password');
+    };
+
     const handleGoogleLogin = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         e.stopPropagation();
@@ -185,7 +190,11 @@ const Login: React.FC = () => {
                                     />
                                     <span className="ml-2 text-sm text-slate-100">Nhớ mật khẩu</span>
                                 </label>
-                                <a href="#" className="text-sm text-cyan-200 hover:text-white font-medium underline decoration-dotted">
+                                <a
+                                    href="#"
+                                    onClick={handleForgotPasswordClick}
+                                    className="text-sm text-cyan-200 hover:text-white font-medium underline decoration-dotted"
+                                >
                                     Quên mật khẩu?
                                 </a>
                             </div>

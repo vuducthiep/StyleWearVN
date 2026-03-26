@@ -4,6 +4,9 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import AdminLayout from './layouts/AdminLayout';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
+import ForgotPasswordPage from './pages/Auth/ForgotPassword.page';
+import VerifyOtpPage from './pages/Auth/VerifyOtp.page';
+import ResetPasswordPage from './pages/Auth/ResetPassword.page';
 import Home from './pages/Customer/Home/Home.page';
 import ProductDetail from './pages/Customer/ProductDetail/ProductDetail.page';
 import CartPage from './pages/Customer/Cart/Cart.page';
@@ -45,6 +48,9 @@ const App: React.FC = () => {
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/verify-otp" element={<VerifyOtpPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/oauth2-callback" element={<OAuth2CallbackPage />} />
 
           {/* Admin Routes */}
