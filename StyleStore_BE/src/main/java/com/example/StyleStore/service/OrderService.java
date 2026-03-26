@@ -1,6 +1,6 @@
 package com.example.StyleStore.service;
 
-import com.example.StyleStore.dto.request.OrderRequest;
+import com.example.StyleStore.dto.request.UserOrderRequest;
 import com.example.StyleStore.dto.response.OrderResponse;
 import com.example.StyleStore.dto.response.stats.BestSellingProductsInCategoriesDTO;
 import com.example.StyleStore.dto.response.stats.MonthlyRevenueDto;
@@ -27,6 +27,6 @@ public interface OrderService {
     OrderResponse confirmOrder(long id);
     OrderResponse cancelOrder(long id);
     OrderResponse deliveredOrder(long id);
-    OrderResponse createOrder(User user, OrderRequest request);
+    OrderResponse createOrder(User user, UserOrderRequest request);
     List<BestSellingProductsInCategoriesDTO> getBestSellingProductsInCategories();
 }

@@ -1,6 +1,6 @@
 package com.example.StyleStore.service.impl;
 
-import com.example.StyleStore.dto.request.OrderRequest;
+import com.example.StyleStore.dto.request.UserOrderRequest;
 import com.example.StyleStore.dto.response.OrderResponse;
 import com.example.StyleStore.dto.response.stats.BestSellingProductsInCategoriesDTO;
 import com.example.StyleStore.dto.response.stats.MonthlyRevenueDto;
@@ -325,7 +325,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderResponse createOrder(User user, OrderRequest request) {
+    public OrderResponse createOrder(User user, UserOrderRequest request) {
         if (request.getOrderItems() == null || request.getOrderItems().isEmpty()) {
             throw new RuntimeException("Danh sách sản phẩm không được để trống");
         }
@@ -333,7 +333,7 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItem> pendingOrderItems = new ArrayList<>();
         double totalAmount = 0.0;
 
-        for (OrderRequest.OrderItemRequest itemRequest : request.getOrderItems()) {
+        for (UserOrderRequest.OrderItemRequest itemRequest : request.getOrderItems()) {
             if (itemRequest.getQuantity() == null || itemRequest.getQuantity() <= 0) {
                 throw new RuntimeException("Số lượng sản phẩm phải lớn hơn 0");
             }

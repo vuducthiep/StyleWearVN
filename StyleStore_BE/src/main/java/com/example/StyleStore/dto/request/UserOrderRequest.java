@@ -10,7 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderRequest {
+public class UserOrderRequest {
     private String shippingAddress;
     private PaymentMethod paymentMethod;
     private String promotionCode;

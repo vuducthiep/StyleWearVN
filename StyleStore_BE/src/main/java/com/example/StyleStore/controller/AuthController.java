@@ -1,8 +1,8 @@
 package com.example.StyleStore.controller;
 
-import com.example.StyleStore.dto.request.LoginRequest;
-import com.example.StyleStore.dto.request.RegisterRequest;
-import com.example.StyleStore.dto.request.SendOtpRequest;
+import com.example.StyleStore.dto.request.auth.LoginRequest;
+import com.example.StyleStore.dto.request.auth.RegisterRequest;
+import com.example.StyleStore.dto.request.auth.SendOtpRequest;
 import com.example.StyleStore.dto.response.ApiResponse;
 import com.example.StyleStore.dto.response.AuthResponse;
 import com.example.StyleStore.service.AuthService;

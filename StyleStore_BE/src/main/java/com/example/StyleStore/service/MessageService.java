@@ -1,6 +1,6 @@
 package com.example.StyleStore.service;
 
-import com.example.StyleStore.dto.response.ChatUserResponse;
+import com.example.StyleStore.dto.response.AdminChatUsersResponse;
 import com.example.StyleStore.dto.response.MessageResponse;
 
 import java.util.List;
@@ -11,5 +11,5 @@ public interface MessageService {
     MessageResponse sendMessageFromEmail(String senderEmail, Long receiverUserId, String content);
     List<MessageResponse> getConversation(Long otherUserId);
     int markConversationRead(Long otherUserId);
-    List<ChatUserResponse> getChatUsers();
+    List<AdminChatUsersResponse> getChatUsers();
 }

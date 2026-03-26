@@ -1,6 +1,6 @@
 package com.example.StyleStore.controller.user;
 
-import com.example.StyleStore.dto.request.OrderRequest;
+import com.example.StyleStore.dto.request.UserOrderRequest;
 import com.example.StyleStore.dto.response.ApiResponse;
 import com.example.StyleStore.dto.response.OrderResponse;
 import com.example.StyleStore.model.User;
@@ -52,7 +52,7 @@ public class User_OrderController {
 
     // API tạo đơn hàng
     @PostMapping
-    public ResponseEntity<ApiResponse<OrderResponse>> createOrder(@RequestBody OrderRequest request) {
+    public ResponseEntity<ApiResponse<OrderResponse>> createOrder(@RequestBody UserOrderRequest request) {
         try {
             User currentUser = getCurrentUser();
 

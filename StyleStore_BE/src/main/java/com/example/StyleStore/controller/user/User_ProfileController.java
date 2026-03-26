@@ -1,6 +1,6 @@
 package com.example.StyleStore.controller.user;
 
-import com.example.StyleStore.dto.request.UpdateProfileRequest;
+import com.example.StyleStore.dto.request.UserUpdateProfileRequest;
 import com.example.StyleStore.dto.response.ApiResponse;
 import com.example.StyleStore.dto.response.UserProfileResponse;
 import com.example.StyleStore.model.User;
@@ -73,7 +73,7 @@ public class User_ProfileController {
     // Cập nhật thông tin cá nhân
     @PutMapping
     public ResponseEntity<ApiResponse<UserProfileResponse>> updateProfile(
-            @RequestBody UpdateProfileRequest request) {
+            @RequestBody UserUpdateProfileRequest request) {
         try {
             Long userId = getCurrentUserId();
             User user = userRepository.findById(userId)

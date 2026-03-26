@@ -8,9 +8,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UpdateCommentRequest {
+public class UserUpdateCommentRequest {
 
     @NotBlank(message = "Nội dung comment không được để trống")
-    @Size(min = 10, max = 1000, message = "Nội dung comment phải từ 10 đến 1000 ký tự")
+    @Size(min = 5, max = 1000, message = "Nội dung comment phải từ 10 đến 1000 ký tự")
     private String content;
 }

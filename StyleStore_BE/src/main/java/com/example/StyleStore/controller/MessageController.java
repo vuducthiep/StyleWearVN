@@ -2,7 +2,7 @@ package com.example.StyleStore.controller;
 
 import com.example.StyleStore.dto.request.SendMessageRequest;
 import com.example.StyleStore.dto.response.ApiResponse;
-import com.example.StyleStore.dto.response.ChatUserResponse;
+import com.example.StyleStore.dto.response.AdminChatUsersResponse;
 import com.example.StyleStore.dto.response.MessageResponse;
 import com.example.StyleStore.service.MessageService;
 import jakarta.validation.Valid;
@@ -64,9 +64,9 @@ public class MessageController {
     }
 
     @GetMapping("/chat-users")
-    public ResponseEntity<ApiResponse<List<ChatUserResponse>>> getChatUsers() {
+    public ResponseEntity<ApiResponse<List<AdminChatUsersResponse>>> getChatUsers() {
         try {
-            List<ChatUserResponse> users = messageService.getChatUsers();
+            List<AdminChatUsersResponse> users = messageService.getChatUsers();
             return ResponseEntity.ok(ApiResponse.ok("Get chat users success", users));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

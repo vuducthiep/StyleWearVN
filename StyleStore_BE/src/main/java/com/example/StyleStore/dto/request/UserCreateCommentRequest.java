@@ -8,7 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreateCommentRequest {
+public class UserCreateCommentRequest {
 
     @NotNull(message = "Product ID không được để trống")
     private Long productId;

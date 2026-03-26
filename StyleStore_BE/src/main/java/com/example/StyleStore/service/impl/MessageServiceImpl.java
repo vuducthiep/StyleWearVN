@@ -1,6 +1,6 @@
 package com.example.StyleStore.service.impl;
 
-import com.example.StyleStore.dto.response.ChatUserResponse;
+import com.example.StyleStore.dto.response.AdminChatUsersResponse;
 import com.example.StyleStore.dto.response.MessageResponse;
 import com.example.StyleStore.model.Message;
 import com.example.StyleStore.model.User;
@@ -110,12 +110,12 @@ public class MessageServiceImpl implements MessageService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<ChatUserResponse> getChatUsers() {
+        public List<AdminChatUsersResponse> getChatUsers() {
                 User currentUser = getCurrentUser();
                 List<MessageRepository.ChatUserProjection> users = messageRepository
                                 .findDistinctChatUsers(currentUser.getId());
                 return users.stream()
-                                .map(user -> ChatUserResponse.builder()
+                                .map(user -> AdminChatUsersResponse.builder()
                                                 .id(user.getId())
                                                 .fullName(user.getFullName())
                                                 .email(user.getEmail())

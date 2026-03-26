@@ -1,7 +1,7 @@
 package com.example.StyleStore.service.impl;
 
-import com.example.StyleStore.dto.request.CreateCommentRequest;
-import com.example.StyleStore.dto.request.UpdateCommentRequest;
+import com.example.StyleStore.dto.request.UserCreateCommentRequest;
+import com.example.StyleStore.dto.request.UserUpdateCommentRequest;
 import com.example.StyleStore.dto.response.CommentResponse;
 import com.example.StyleStore.model.Comment;
 import com.example.StyleStore.model.Product;
@@ -37,7 +37,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentResponse createComment(CreateCommentRequest request) {
+    public CommentResponse createComment(UserCreateCommentRequest request) {
         String userEmail = getCurrentUserEmail();
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -57,7 +57,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentResponse updateComment(Long commentId, UpdateCommentRequest request) {
+    public CommentResponse updateComment(Long commentId, UserUpdateCommentRequest request) {
         String userEmail = getCurrentUserEmail();
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found with id: " + commentId));

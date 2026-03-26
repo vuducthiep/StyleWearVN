@@ -11,7 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChatUserResponse {
+public class AdminChatUsersResponse {
     private Long id;
     private String fullName;
     private String email;

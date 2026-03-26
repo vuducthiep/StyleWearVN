@@ -1,7 +1,7 @@
 package com.example.StyleStore.controller.user;
 
-import com.example.StyleStore.dto.request.CreateCommentRequest;
-import com.example.StyleStore.dto.request.UpdateCommentRequest;
+import com.example.StyleStore.dto.request.UserCreateCommentRequest;
+import com.example.StyleStore.dto.request.UserUpdateCommentRequest;
 import com.example.StyleStore.dto.response.ApiResponse;
 import com.example.StyleStore.dto.response.CommentResponse;
 import com.example.StyleStore.service.CommentService;
@@ -27,7 +27,7 @@ public class User_CommentController {
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<CommentResponse>> createComment(
-            @Valid @RequestBody CreateCommentRequest request) {
+            @Valid @RequestBody UserCreateCommentRequest request) {
         try {
             CommentResponse comment = commentService.createComment(request);
             return ResponseEntity.status(HttpStatus.CREATED)
@@ -42,7 +42,7 @@ public class User_CommentController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<CommentResponse>> updateComment(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateCommentRequest request) {
+            @Valid @RequestBody UserUpdateCommentRequest request) {
         try {
             CommentResponse comment = commentService.updateComment(id, request);
             return ResponseEntity.ok(ApiResponse.ok("Cập nhật comment thành công", comment));
