@@ -30,7 +30,7 @@ public class Admin_ProductController {
     @Autowired
     private ProductService productService;
 
-    // Lấy danh sách sản phẩm (có phân trang)
+    // get list product, pagination, sort
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Page<Product>>> getAllProducts(
@@ -87,6 +87,7 @@ public class Admin_ProductController {
         }
     }
 
+    // if need delete, just set status = false, not delete from database
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Product>> updateProduct(@PathVariable Long id, @RequestBody Product newProduct) {
@@ -101,6 +102,7 @@ public class Admin_ProductController {
         }
     }
 
+    //not use delete, just set status = false
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Long id) {
