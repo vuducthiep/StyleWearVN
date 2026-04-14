@@ -1,6 +1,7 @@
 package com.example.StyleStore.repository;
 
 import com.example.StyleStore.model.ImportReceipt;
+import com.example.StyleStore.model.enums.ImportReceiptStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,9 +16,9 @@ public interface ImportReceiptRepository extends JpaRepository<ImportReceipt, Lo
             SELECT ir
             FROM ImportReceipt ir
             WHERE (:supplierId IS NULL OR ir.supplier.id = :supplierId)
-              AND (:status IS NULL OR LOWER(ir.status) = LOWER(:status))
+              AND (:status IS NULL OR ir.status = :status)
             """)
     Page<ImportReceipt> search(@Param("supplierId") Long supplierId,
-                               @Param("status") String status,
+                               @Param("status") ImportReceiptStatus status,
                                Pageable pageable);
 }

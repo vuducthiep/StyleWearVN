@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import { DashboardOutlined, UserOutlined, ShoppingOutlined, ShoppingCartOutlined, LogoutOutlined, AppstoreOutlined, MessageOutlined, TagsOutlined, ShopOutlined } from '@ant-design/icons';
+import { DashboardOutlined, UserOutlined, ShoppingOutlined, ShoppingCartOutlined, LogoutOutlined, AppstoreOutlined, MessageOutlined, TagsOutlined, ShopOutlined, InboxOutlined } from '@ant-design/icons';
 import logo from '../../assets/Logo.jpg';
 
 interface SidebarItem {
@@ -21,6 +21,7 @@ const Sidebar: React.FC = () => {
         { label: 'Quản lý danh mục', path: '/admin/category-manager', icon: <AppstoreOutlined /> },
         { label: 'Quản lý khuyến mãi', path: '/admin/promotion-manager', icon: <TagsOutlined /> },
         { label: 'Quản lý nhà cung cấp', path: '/admin/supplier-manager', icon: <ShopOutlined /> },
+        { label: 'Quản lý phiếu nhập', path: '/admin/import-receipt-manager', icon: <InboxOutlined /> },
         { label: 'Quản lý đơn hàng', path: '/admin/order-manager', icon: <ShoppingCartOutlined /> },
         { label: 'Hỗ trợ khách hàng', path: '/admin/support-chat', icon: <MessageOutlined /> },
     ];

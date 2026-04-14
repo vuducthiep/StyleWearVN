@@ -22,6 +22,7 @@ import SearchPage from './pages/Customer/Search/Search.page';
 import CategoryManager from './pages/Admin/CategoryManage/CategoryManage.page';
 import PromotionManage from './pages/Admin/PromotionManage/PromotionManage.page';
 import SupplierManagePage from './pages/Admin/SupplierManage/SupplierManage.page';
+import ImportReceiptManage from './pages/Admin/ImportReceiptManage/ImportReceiptManage.page';
 import SupportChatWidget from './components/SupportChatWidget';
 import { getAuthToken, getCurrentUserRole } from './services/auth';
 import NotFoundPage from './pages/NotFound.page';
@@ -64,6 +65,7 @@ const App: React.FC = () => {
               <Route path='/admin/category-manager' element={<CategoryManager />} />
               <Route path='/admin/promotion-manager' element={<PromotionManage />} />
               <Route path='/admin/supplier-manager' element={<SupplierManagePage />} />
+              <Route path='/admin/import-receipt-manager' element={<ImportReceiptManage />} />
               <Route path="/admin/order-manager" element={<OrderManage />} />
               <Route path="/admin/support-chat" element={<SupportChatPage />} />
             </Route>

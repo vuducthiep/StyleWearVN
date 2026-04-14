@@ -1,5 +1,6 @@
 package com.example.StyleStore.model;
 
+import com.example.StyleStore.model.enums.ImportReceiptStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -30,8 +31,9 @@ public class ImportReceipt {
     @Column(name = "note", length = 255)
     private String note;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
-    private String status;
+    private ImportReceiptStatus status;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

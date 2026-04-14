@@ -7,6 +7,7 @@ import com.example.StyleStore.dto.response.ImportReceiptItemResponse;
 import com.example.StyleStore.dto.response.ImportReceiptResponse;
 import com.example.StyleStore.dto.response.SupplierResponse;
 import com.example.StyleStore.model.*;
+import com.example.StyleStore.model.enums.ImportReceiptStatus;
 import com.example.StyleStore.repository.*;
 import com.example.StyleStore.service.ImportReceiptService;
 import lombok.RequiredArgsConstructor;
@@ -36,28 +37,25 @@ public class ImportReceiptServiceImpl implements ImportReceiptService {
     @Transactional
     public ImportReceiptResponse createImportReceipt(ImportReceiptCreateRequest request) {
         if (request == null) {
-            throw new RuntimeException("Yeu cau khong hop le");
+            throw new RuntimeException("Yêu cầu không hợp lệ");
         }
         if (request.getSupplierId() == null) {
-            throw new RuntimeException("SupplierId khong duoc de trong");
+            throw new RuntimeException("SupplierId không được để trống");
         }
         if (request.getItems() == null || request.getItems().isEmpty()) {
-            throw new RuntimeException("Danh sach san pham nhap khong duoc de trong");
+            throw new RuntimeException("Danh sách sản phẩm không được để trống");
         }
 
         Supplier supplier = supplierRepository.findById(request.getSupplierId())
-                .orElseThrow(() -> new RuntimeException("Khong tim thay nha cung cap"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhà cung cấp"));
 
-        String status = request.getStatus();
-        if (status == null || status.trim().isEmpty()) {
-            status = "COMPLETED";
-        }
+        ImportReceiptStatus status = resolveImportReceiptStatus(request.getStatus());
 
         ImportReceipt receipt = ImportReceipt.builder()
                 .supplier(supplier)
                 .createdBy(request.getCreatedBy())
                 .note(request.getNote())
-                .status(status.trim().toUpperCase(Locale.ROOT))
+                .status(status)
                 .build();
 
         ImportReceipt savedReceipt = importReceiptRepository.save(receipt);
@@ -65,20 +63,20 @@ public class ImportReceiptServiceImpl implements ImportReceiptService {
         List<ImportReceiptItem> receiptItems = new ArrayList<>();
         for (ImportReceiptCreateRequest.ImportReceiptItemRequest itemRequest : request.getItems()) {
             if (itemRequest.getProductId() == null || itemRequest.getSizeId() == null) {
-                throw new RuntimeException("Thong tin san pham/size khong hop le");
+                throw new RuntimeException("Thông tin sản phẩm/size không hợp lệ");
             }
             if (itemRequest.getQuantity() == null || itemRequest.getQuantity() <= 0) {
-                throw new RuntimeException("So luong nhap phai lon hon 0");
+                throw new RuntimeException("Số lượng nhập phải lớn hơn 0");
             }
 
             Product product = productRepository.findById(itemRequest.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Khong tim thay san pham id=" + itemRequest.getProductId()));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm id=" + itemRequest.getProductId()));
             Size size = sizeRepository.findById(itemRequest.getSizeId())
-                    .orElseThrow(() -> new RuntimeException("Khong tim thay size id=" + itemRequest.getSizeId()));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy size id=" + itemRequest.getSizeId()));
 
             Double importPrice = itemRequest.getImportPrice() != null ? itemRequest.getImportPrice() : product.getPrice();
             if (importPrice == null || importPrice < 0) {
-                throw new RuntimeException("Gia nhap khong hop le cho san pham " + product.getName());
+                throw new RuntimeException("Giá nhập cho sản phẩm " + product.getName() + " không hợp lệ");
             }
 
             ProductSize productSize = productSizeRepository
@@ -116,16 +114,31 @@ public class ImportReceiptServiceImpl implements ImportReceiptService {
                 : Sort.by(sortBy).descending();
 
         PageRequest pageRequest = PageRequest.of(page, size, sort);
-        String normalizedStatus = (status == null || status.trim().isEmpty()) ? null : status.trim();
+        ImportReceiptStatus normalizedStatus = null;
+        if (status != null && !status.trim().isEmpty()) {
+            normalizedStatus = resolveImportReceiptStatus(status);
+        }
 
         return importReceiptRepository.search(supplierId, normalizedStatus, pageRequest)
                 .map(receipt -> toImportReceiptResponse(receipt, null, false));
     }
 
+    private ImportReceiptStatus resolveImportReceiptStatus(String rawStatus) {
+        if (rawStatus == null || rawStatus.trim().isEmpty()) {
+            return ImportReceiptStatus.COMPLETED;
+        }
+
+        if (!ImportReceiptStatus.COMPLETED.name().equalsIgnoreCase(rawStatus.trim())) {
+            throw new RuntimeException("Trạng thái phiếu nhập chỉ hỗ trợ COMPLETED");
+        }
+
+        return ImportReceiptStatus.COMPLETED;
+    }
+
     @Override
     public ImportReceiptResponse getImportReceiptById(Long id) {
         ImportReceipt receipt = importReceiptRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Khong tim thay phieu nhap"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu nhập"));
         List<ImportReceiptItem> items = importReceiptItemRepository.findByReceiptId(id);
         return toImportReceiptResponse(receipt, items, true);
     }
@@ -146,10 +159,10 @@ public class ImportReceiptServiceImpl implements ImportReceiptService {
     @Override
     public SupplierResponse createSupplier(SupplierCreateRequest request) {
         if (request == null || request.getName() == null || request.getName().trim().isEmpty()) {
-            throw new RuntimeException("Ten nha cung cap khong duoc de trong");
+            throw new RuntimeException("Tên nhà cung cấp không được để trống");
         }
         if (supplierRepository.existsByNameIgnoreCase(request.getName().trim())) {
-            throw new RuntimeException("Ten nha cung cap da ton tai");
+            throw new RuntimeException("Tên nhà cung cấp đã tồn tại");
         }
 
         String status = request.getStatus();
@@ -236,7 +249,7 @@ public class ImportReceiptServiceImpl implements ImportReceiptService {
                 .supplierName(receipt.getSupplier().getName())
                 .createdBy(receipt.getCreatedBy())
                 .note(receipt.getNote())
-                .status(receipt.getStatus())
+                .status(receipt.getStatus() != null ? receipt.getStatus().name() : null)
                 .totalAmount(totalAmount)
                 .createdAt(receipt.getCreatedAt())
                 .updatedAt(receipt.getUpdatedAt())
