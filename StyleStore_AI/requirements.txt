@@ -1,0 +1,10 @@
+fastapi==0.115.8
+uvicorn[standard]==0.34.0
+httpx==0.28.1
+pydantic-settings==2.8.0
+langchain==0.3.19
+langchain-community==0.3.18
+langchain-openai==0.3.6
+langchain-google-genai==2.0.9
+chromadb==0.6.3
+sentence-transformers==3.4.1

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, History, LogOut, User, LogIn } from 'lucide-react';
+import { ShoppingCart, History, LogOut, User, LogIn, Sparkles } from 'lucide-react';
 import logo from '../assets/Logo.jpg';
 
 interface UserState {
@@ -142,6 +142,15 @@ export const Header = () => {
                         >
                             <History className="w-6 h-6" />
                             <span className="text-sm font-medium hidden sm:inline">Lịch sử đơn hàng</span>
+                        </button>
+
+                        <button
+                            onClick={() => navigate('/ai-consultant')}
+                            className="flex items-center gap-2 text-slate-100 hover:text-orange-200 transition-colors"
+                            title="AI tư vấn sản phẩm"
+                        >
+                            <Sparkles className="w-6 h-6" />
+                            <span className="text-sm font-medium hidden sm:inline">AI tư vấn</span>
                         </button>
 
                         {/* Auth Section */}

@@ -26,6 +26,7 @@ import ImportReceiptManage from './pages/Admin/ImportReceiptManage/ImportReceipt
 import SupportChatWidget from './components/SupportChatWidget';
 import { getAuthToken, getCurrentUserRole } from './services/auth';
 import NotFoundPage from './pages/NotFound.page';
+import AIChatPage from './pages/Customer/AIChat/AIChat.page';
 
 const RequireAdminRoute: React.FC = () => {
   const token = getAuthToken();
@@ -78,6 +79,7 @@ const App: React.FC = () => {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path='/orders' element={<OrderPage />} />
+          <Route path="/ai-consultant" element={<AIChatPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <SupportChatWidget />

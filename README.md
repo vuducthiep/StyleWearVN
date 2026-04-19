@@ -19,6 +19,7 @@
 ## Structure
 - `StyleStore_BE/` – Spring Boot API
 - `StyleStore_FE/` – React/Vite UI
+- `StyleStore_AI/` – Python FastAPI + LangChain RAG service for product consultation
 
 ## Quick Start
 - Backend: `cd StyleStore_BE && ./mvnw spring-boot:run` 
