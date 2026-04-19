@@ -230,7 +230,7 @@ const Banner: React.FC = () => {
                 }
             `}</style>
 
-            <div className="w-full max-h-[400px] relative overflow-hidden">
+            <div className="w-full min-h-[400px] relative overflow-hidden">
                 {/* Animated Gradient Background */}
                 <div className="absolute inset-0 gradient-animated opacity-20" />
 
@@ -242,9 +242,9 @@ const Banner: React.FC = () => {
                 </div>
 
                 {/* Content */}
-                <div className="max-w-7xl mx-auto px-4 py-8 flex items-center justify-between gap-12 h-full relative z-10">
+                <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-2 items-center gap-8 lg:gap-12 min-h-[400px] relative z-10">
                     {/* Left Section - Text Introduction */}
-                    <div className="flex-1 space-y-6 flex flex-col items-center">
+                    <div className="w-full max-w-[520px] mx-auto lg:mx-0 space-y-6 flex flex-col items-center lg:items-start">
                         <div className="w-full flex flex-col items-center">
                             <h1
                                 className="h-14 text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-3 text-center"
@@ -253,7 +253,7 @@ const Banner: React.FC = () => {
                                 StyleStore
                             </h1>
                             <div
-                                className="relative w-[460px] h-[150px] rounded-lg border border-purple-200 bg-white/80 backdrop-blur-sm px-3.5 py-3 promo-flash overflow-hidden"
+                                className="relative w-full max-w-[460px] h-[150px] rounded-lg border border-purple-200 bg-white/80 backdrop-blur-sm px-3.5 py-3 promo-flash overflow-hidden"
                                 style={{ animation: 'fadeUp 0.8s ease 0.1s both' }}
                             >
                                 {promotions.length > 1 && (
@@ -328,7 +328,7 @@ const Banner: React.FC = () => {
                     </div>
 
                     {/* Right Section - Image Carousel */}
-                    <div className="flex-1 relative group" style={{ animation: 'fadeUp 0.9s ease 0.25s both' }}>
+                    <div className="w-full max-w-[560px] mx-auto lg:mx-0 relative group" style={{ animation: 'fadeUp 0.9s ease 0.25s both' }}>
                         {/* Image Container */}
                         <div className="relative w-full h-80 rounded-2xl overflow-hidden shadow-2xl">
                             {images.map((image, index) => (
