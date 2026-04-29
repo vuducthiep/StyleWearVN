@@ -81,6 +81,10 @@ public class Admin_UserController {
             User updatedUser = userService.updateUser(id, newUser);
             return ResponseEntity.ok(ApiResponse.ok("Cập nhật người dùng thành công", AdminUserResponse.from(updatedUser)));
         } catch (RuntimeException e) {
+            String message = e.getMessage();
+            if (message != null && message.contains("10 chữ số")) {
+                return ResponseEntity.badRequest().body(ApiResponse.fail(message));
+            }
             return ResponseEntity.status(404).body(ApiResponse.fail("Không tìm thấy người dùng"));
         }
     }

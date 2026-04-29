@@ -107,7 +107,13 @@ public class UserServiceImpl implements UserService {
                         user.setRole(role);
                     }
                     if (newUser.getStatus() != null) user.setStatus(newUser.getStatus());
-                    if (newUser.getPhoneNumber() != null) user.setPhoneNumber(newUser.getPhoneNumber());
+                    if (newUser.getPhoneNumber() != null) {
+                        String phoneNumber = newUser.getPhoneNumber();
+                        if (!phoneNumber.matches("^\\d{10}$")) {
+                            throw new RuntimeException("Số điện thoại phải là 10 chữ số");
+                        }
+                        user.setPhoneNumber(phoneNumber);
+                    }
                     if (newUser.getGender() != null) user.setGender(newUser.getGender());
                     if (newUser.getAddress() != null) user.setAddress(newUser.getAddress());
                     return userRepository.save(user);

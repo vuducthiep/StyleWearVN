@@ -1,6 +1,7 @@
 package com.example.StyleStore.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -38,7 +39,8 @@ public class User {
     @Column(nullable = false, length = 20)
     private UserStatus status = UserStatus.ACTIVE;
 
-    @Column(name = "phone_number", nullable = false, length = 20)
+    @Column(name = "phone_number", nullable = false, length = 10)
+    @Pattern(regexp = "^\\d{10}$", message = "Số điện thoại phải là 10 chữ số")
     private String phoneNumber;
 
     @Column(name = "gender", nullable = false, length = 10)
