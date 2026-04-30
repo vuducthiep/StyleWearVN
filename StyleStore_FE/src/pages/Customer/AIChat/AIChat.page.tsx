@@ -9,9 +9,9 @@ import { askProductAi } from '../../../services/aiChat';
 
 const quickPrompts = [
     'Gợi ý áo nam dưới 500k dễ phối đồ',
-    'Tôi cần đồ cho nữ đi làm, màu trung tính',
-    'Tư vấn sản phẩm theo phong cách trẻ trung, thoải mái',
-    'Gợi ý sản phẩm theo danh mục mới nhất',
+    'Tôi cần áo sơ mi nam giá từ 300k đến 700k',
+    'Tôi muốn mua váy nữ màu xanh dương',
+    'Tôi đang tìm quần jean nữ dáng rộng',
 ];
 
 const CHAT_HISTORY_STORAGE_KEY = 'stylestore-ai-chat-history-v1';

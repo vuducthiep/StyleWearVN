@@ -27,6 +27,10 @@ pip install -r requirements.txt
 
 2. Copy `.env.example` to `.env` and adjust values.
 
+- Set `LLM_PROVIDER` to `openai` to use OpenAI models.
+- Provide your OpenAI API key in `OPENAI_API_KEY`; if you use a custom host, set `OPENAI_BASE_URL`.
+- (Optional) If you previously used Gemini, remove or leave `GEMINI_API_KEY` empty.
+
 3. Make sure the Spring Boot backend is running at the configured `API_BASE_URL`.
 
 4. Start the service:
