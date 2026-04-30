@@ -348,25 +348,38 @@ public class OrderServiceImpl implements OrderService {
                     .orElseThrow(() -> new RuntimeException(
                             "Sản phẩm với ID " + itemRequest.getProductId() + " không tồn tại"));
 
-            ProductSize productSize = productSizeRepository
+            // ✅ Get product size info first (for error messages)
+            ProductSize productSizeInfo = productSizeRepository
                     .findByProduct_IdAndSize_Id(itemRequest.getProductId(), itemRequest.getSizeId())
                     .orElseThrow(() -> new RuntimeException("Size không có sẵn cho sản phẩm này"));
 
-            if (productSize.getStock() < itemRequest.getQuantity()) {
-                throw new RuntimeException(
-                        "Sản phẩm " + product.getName() + ", size " + productSize.getSize().getName()
-                                + " chỉ còn " + productSize.getStock() + " cái");
-            }
+            // ✅ Atomic UPDATE WHERE - Prevents race condition!
+            // Single DB operation: UPDATE SET stock = stock - quantity 
+            // WHERE product_id = ? AND size_id = ? AND stock >= quantity
+            // Returns: 1 if success, 0 if stock insufficient
+            int updated = productSizeRepository.decreaseStockIfAvailable(
+                    itemRequest.getProductId(),
+                    itemRequest.getSizeId(),
+                    itemRequest.getQuantity()
+            );
 
-            productSize.setStock(productSize.getStock() - itemRequest.getQuantity());
-            productSizeRepository.save(productSize);
+            if (updated == 0) {
+                // Stock không đủ - UPDATE WHERE không tìm được hàng match
+                ProductSize currentStock = productSizeRepository
+                        .findByProduct_IdAndSize_Id(itemRequest.getProductId(), itemRequest.getSizeId())
+                        .orElse(productSizeInfo);
+                throw new RuntimeException(
+                        "Sản phẩm " + product.getName() + ", size " + productSizeInfo.getSize().getName()
+                                + " chỉ còn " + currentStock.getStock() + " cái");
+            }
+            // Stock successfully decreased at database level! ✅
 
             double unitPrice = product.getPrice();
             totalAmount += unitPrice * itemRequest.getQuantity();
 
             pendingOrderItems.add(OrderItem.builder()
                     .product(product)
-                    .size(productSize.getSize())
+                    .size(productSizeInfo.getSize())
                     .quantity(itemRequest.getQuantity())
                     .price(unitPrice)
                     .build());
