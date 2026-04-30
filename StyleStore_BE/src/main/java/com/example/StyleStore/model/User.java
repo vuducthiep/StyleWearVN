@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.example.StyleStore.model.enums.Gender;
 import com.example.StyleStore.model.enums.UserStatus;
 
 @Getter
@@ -35,6 +36,7 @@ public class User {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private UserStatus status = UserStatus.ACTIVE;
@@ -44,7 +46,8 @@ public class User {
     private String phoneNumber;
 
     @Column(name = "gender", nullable = false, length = 10)
-    private String gender;
+    @Builder.Default
+    private String gender = "OTHER"; // Mặc định là OTHER nếu không cung cấp
 
     @Column(name = "address", length = 255)
     private String address;

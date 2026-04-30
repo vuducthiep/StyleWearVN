@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @Entity
 @Table(name = "cart_items", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "user_id", "product_id", " size_id" }) })
+    @UniqueConstraint(columnNames = { "cart_id", "product_id", "size_id" }) })
 public class CartItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
