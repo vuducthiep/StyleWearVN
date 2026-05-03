@@ -1,8 +1,7 @@
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import tetBg from '../../../assets/BG_TET.jpg';
 
 export interface Size {
     id: number;
@@ -61,6 +60,8 @@ export default function ListProduct({
 }: ListProductProps) {
     const navigate = useNavigate();
     const [sortByPrice, setSortByPrice] = useState<"default" | "asc" | "desc">("default");
+    const productCardRefs = useRef<Record<number, HTMLDivElement | null>>({});
+    const [visibleProducts, setVisibleProducts] = useState<Set<number>>(new Set());
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat("vi-VN", {
@@ -83,6 +84,46 @@ export default function ListProduct({
         return data;
     }, [products, sortByPrice]);
 
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) {
+                        return;
+                    }
+
+                    const productId = Number((entry.target as HTMLElement).dataset.productId);
+
+                    setVisibleProducts((current) => {
+                        if (current.has(productId)) {
+                            return current;
+                        }
+
+                        const next = new Set(current);
+                        next.add(productId);
+                        return next;
+                    });
+                });
+            },
+            {
+                threshold: 0,
+                rootMargin: "0px 0px 50px 0px",
+            }
+        );
+
+        sortedProducts.forEach((product) => {
+            const element = productCardRefs.current[product.id];
+
+            if (element) {
+                observer.observe(element);
+            }
+        });
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [sortedProducts]);
+
     if (error) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -96,13 +137,7 @@ export default function ListProduct({
 
     return (
         <div
-            className="w-full py-12 px-4 relative overflow-hidden"
-            style={{
-                backgroundImage: `url(${tetBg})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                minHeight: '100vh',
-            }}
+            className="w-full py-12 px-4 relative overflow-hidden min-h-screen bg-gradient-to-br from-rose-50 via-white to-sky-50"
         >
             <div className="max-w-7xl mx-auto relative z-10">
 
@@ -115,7 +150,7 @@ export default function ListProduct({
                 ) : (
                     <>
                         {/* Products Grid */}
-                        <div className="bg-red-50/80 backdrop-blur-sm rounded-xl p-8 mb-12 shadow-2xl border-4 border-yellow-400">
+                        <div className="bg-red-50/80 backdrop-blur-sm rounded-xl p-8 mb-12 shadow-2xl border-4 border-pink-200">
                             <div className="flex justify-end mb-6">
                                 <div className="flex items-center gap-3 bg-white/90 px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
                                     <label htmlFor="price-sort" className="text-sm font-semibold text-gray-800 whitespace-nowrap">
@@ -143,17 +178,33 @@ export default function ListProduct({
                                 {sortedProducts.map((product) => (
                                     <div
                                         key={product.id}
-                                        className="group bg-slate-300 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col"
+                                        ref={(node) => {
+                                            productCardRefs.current[product.id] = node;
+                                        }}
+                                        data-product-id={product.id}
+                                        className={`group bg-slate-300 rounded-lg shadow-md overflow-hidden h-full flex flex-col transition-all duration-700 ease-out will-change-transform ${
+                                            visibleProducts.has(product.id)
+                                                ? "opacity-100 translate-y-0"
+                                                : "opacity-0 translate-y-10"
+                                        } hover:shadow-xl hover:-translate-y-1`}
+                                        style={{
+                                            transitionDelay: `${Math.min(sortedProducts.findIndex((item) => item.id === product.id), 8) * 80}ms`,
+                                        }}
                                     >
                                         {/* Product Image */}
-                                        <div className="relative overflow-hidden bg-gray-200 h-64">
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate(`/product/${product.id}`)}
+                                            className="relative overflow-hidden bg-gray-200 h-64 cursor-pointer text-left"
+                                            aria-label={`Xem chi tiết sản phẩm ${product.name}`}
+                                        >
                                             <img
                                                 src={product.thumbnail}
                                                 alt={product.name}
                                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                             />
 
-                                        </div>
+                                        </button>
 
                                         {/* Product Info */}
                                         <div className="p-5 flex flex-col flex-1">
